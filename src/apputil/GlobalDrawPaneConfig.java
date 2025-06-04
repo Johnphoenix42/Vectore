@@ -1,0 +1,66 @@
+package apputil;
+
+import appcustomcontrol.DrawableButtonTool;
+import javafx.scene.Node;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
+
+/**
+ * A convenience class that hold state or current configuration values like strokeWidth, color, e.t.c.
+ * Classes and methods that affect states get a static instance of this class and sets it values, which
+ * other class can then access when they need to be notified or consider state update.
+ */
+public final class GlobalDrawPaneConfig {
+
+    private Paint foregroundColor = Color.BLACK;
+    private String curveType = "Quadratic";
+    private double strokeWidth = 1;
+    private DrawableButtonTool currentTool;
+    private DrawableButtonTool prevSelectedTool;
+    private Node selectedNode;
+    private static final GlobalDrawPaneConfig globalDrawPaneConfig = new GlobalDrawPaneConfig();
+
+    public void setForegroundColor(Paint foregroundColor){
+        this.foregroundColor = foregroundColor;
+    }
+
+    public Paint getForegroundColor(){
+        return this.foregroundColor;
+    }
+
+    public void setCurveType(String curveType) {
+        this.curveType = curveType;
+    }
+
+    public String getCurveType() {
+        return curveType;
+    }
+
+    public double getStrokeWidth() {
+        return strokeWidth;
+    }
+
+    public void setStrokeWidth(double strokeWidth) {
+        this.strokeWidth = strokeWidth;
+    }
+
+    public DrawableButtonTool getCurrentTool() {
+        return currentTool;
+    }
+
+    public void setCurrentTool(DrawableButtonTool currentTool) {
+        this.currentTool = currentTool;
+    }
+
+    public static GlobalDrawPaneConfig getInstance(){
+        return globalDrawPaneConfig;
+    }
+
+    public void setPreviousTool(DrawableButtonTool prevSelectedButton) {
+        this.prevSelectedTool = prevSelectedButton;
+    }
+
+    public DrawableButtonTool getPrevSelectedTool(){
+        return prevSelectedTool;
+    }
+}
