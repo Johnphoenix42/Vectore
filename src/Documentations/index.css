@@ -1,0 +1,22 @@
+body{
+background-color:wheat;
+textAlign:center;
+}
+header{
+background-color: red;
+color: white;
+font-size: large;
+textAlign: center;
+}
+button{
+border-radius: 1rem;
+padding: 0.5rem;
+background-color: red;
+color: white;
+pointer:cursor;
+border:none;
+}
+button:hover{
+background-color: white;
+color: red
+}
