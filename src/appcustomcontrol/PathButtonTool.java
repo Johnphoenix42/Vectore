@@ -20,14 +20,21 @@ import javafx.scene.shape.*;
 import javax.vecmath.Vector2d;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public abstract class PathButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "path_";
     private static final String SECONDARY = "secondary";
     private static final String PRIMARY = "primary";
+
+    // PathButtonTool's own very nodeTree. It's "primary" childNode contains every path DrawPane still has, i.e. not deleted.
     TreeMap<String, LinkedHashMap<String, Node>> nodeTree;
+
+    // A global reference of renderTree so it does not get garbage-collected;
     TreeMap<String, LinkedHashMap<String, Node>> globalRenderTree;
+
+    ArrayList<Node> pathElementControls; //Exists to maintain reference to control_0 and control_1.
     private Path activePath = null;
     private int shapeCounter = 0;
     private int breakPointCounter = 0;
@@ -51,6 +58,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         globalRenderTree = new TreeMap<>();
         globalRenderTree.put(PRIMARY, new LinkedHashMap<>());
         globalRenderTree.put(SECONDARY, new LinkedHashMap<>());
+        pathElementControls = new ArrayList<>(2);
     }
 
     <K,V> void merge(Map<K,V> mainMap, Map<K,V> auxilliaryMap){
@@ -84,20 +92,34 @@ public abstract class PathButtonTool extends DrawableButtonTool {
 
     @Override
     public <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
-        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
-        if (isPathDrawing && isPathOpenReady){
+        if (eventType == MouseEvent.MOUSE_PRESSED) {
+            TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
             renderTree.put(PRIMARY, new LinkedHashMap<>());
             renderTree.put(SECONDARY, new LinkedHashMap<>());
-
             LinkedHashMap<String, Node> breakPointsMap = nodeTree.get(SECONDARY);
-            if (breakPointsMap.containsKey("point_" + (shapeCounter - 1) + "_0")) {
-                Node newestNodeBreakPoint = breakPointsMap.remove("point_" + shapeCounter + "_0");
-                renderTree.get(SECONDARY).putAll(breakPointsMap);
-                breakPointsMap.clear();
-                breakPointsMap.put("point_" + shapeCounter + "_0", newestNodeBreakPoint);
+
+            //isPathDrawing at this point means path is not drawing or not.
+            if (isPathDrawing && isPathOpenReady) {
+
+                /*
+                This next block checks if a new Path has been created and the last path's control points
+                remain active. If they are, it clears them all except for the first control point
+                 */
+                if (breakPointsMap.containsKey("point_" + (shapeCounter - 1) + "_0")) {
+                    Node newestNodeBreakPoint = breakPointsMap.remove("point_" + shapeCounter + "_0");
+                    renderTree.get(SECONDARY).putAll(breakPointsMap);
+                    breakPointsMap.clear();
+                    breakPointsMap.put("point_" + shapeCounter + "_0", newestNodeBreakPoint);
+                }
             }
+            if (!isPathDrawing && isPathOpenReady) {
+                for (int count = 0; count < pathElementControls.size(); count++) {
+                    renderTree.get(SECONDARY).put("control_" + count, pathElementControls.get(count));
+                }
+            }
+            return renderTree;
         }
-        return renderTree;
+        return null;
     }
 
     @Override
@@ -224,6 +246,9 @@ public abstract class PathButtonTool extends DrawableButtonTool {
                     PathElement pathElement = pathElements.get(index);
                     LinkedHashMap<String, Node> secondaryMainTree = nodeTree.get(SECONDARY);
                     LinkedHashMap<String, Node> secondaryRenderTree = globalRenderTree.get(SECONDARY);
+                    ///getting a reference to last controls before I replace them
+                    pathElementControls.add(secondaryMainTree.get("control_0"));
+                    pathElementControls.add(secondaryMainTree.get("control_1"));
                     secondaryRenderTree.put("control_0", null);
                     secondaryRenderTree.put("control_1", null);
                     secondaryMainTree.put("control_0", null);

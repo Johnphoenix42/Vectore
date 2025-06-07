@@ -1,15 +1,11 @@
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.scene.control.Button;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Popup;
-
 import java.util.*;
 
 public class AppMenuBar extends javafx.scene.control.MenuBar {
@@ -19,7 +15,14 @@ public class AppMenuBar extends javafx.scene.control.MenuBar {
     public AppMenuBar(){
         super();
 
-        Popup popup = new Popup();
+        ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        Dialog<AppMenuBar.NewProjectModel> dialog = new Dialog<>();
+        dialog.setHeaderText("Create new Project");
+        ObservableList<ButtonType> buttonTypeList = dialog.getDialogPane().getButtonTypes();
+        buttonTypeList.add(cancelButtonType);
+        buttonTypeList.add(createButtonType);
+
         menuTreeMap.put("File", new LinkedHashMap<>());
         menuTreeMap.put("Edit", new LinkedHashMap<>());
         menuTreeMap.put("Help", new LinkedHashMap<>());
@@ -44,15 +47,57 @@ public class AppMenuBar extends javafx.scene.control.MenuBar {
                     }
                 }
                 menuItem.setOnAction(event -> {
-                    if(popup.isShowing()) popup.hide();
-                    BorderPane borderPane = new BorderPane(new Button("this"));
-                    borderPane.setMinSize(400, 200);
-                    borderPane.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
-                    popup.getContent().add(borderPane);
-                    popup.setWidth(400);
-                    popup.setWidth(400);
+                    TextField widthTextField = new TextField();
+                    HBox widthBox = new HBox(new Text("Width"), widthTextField);
+                    widthBox.setAlignment(Pos.CENTER);
+                    widthBox.setSpacing(25);
+                    widthBox.setPadding(new Insets(10));
+                    widthBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
 
-                    popup.show(getScene().getWindow());
+                    TextField heightTextField = new TextField();
+                    HBox heightBox = new HBox(new Text("Height"), heightTextField);
+                    heightBox.setAlignment(Pos.CENTER);
+                    heightBox.setSpacing(25);
+                    heightBox.setPadding(new Insets(10));
+                    heightBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
+
+                    VBox borderPane = new VBox(widthBox, heightBox);
+                    dialog.getDialogPane().setContent(borderPane);
+                    dialog.setResultConverter(param -> {
+                        int width = 0;
+                        int height = 0;
+                        try {
+                            width = Integer.parseInt(widthTextField.getText());
+                            height = Integer.parseInt(heightTextField.getText());
+                        } catch (NumberFormatException e) {
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setContentText("Only numbers can be entered.");
+                            alert.showAndWait().ifPresent(response -> {
+                                widthTextField.clear();
+                                heightTextField.clear();
+                            });
+                        }
+                        return new NewProjectModel(width, height);
+                    });
+
+                    dialog.showAndWait()
+                            .filter(response -> response.getWidth() > 1 && response.getHeight() > 1)
+                            .ifPresent(response -> {
+                                Pane canvasPane = DrawPane.createCanvas(response.getWidth(), response.getHeight());
+                                DrawPane dp = GraphicsApp.drawingArea;
+                                dp.getChildren().add(canvasPane);
+                                GraphicsApp.drawingArea.addEventListeners(canvasPane);
+                            });
+
+                    /*final Button btOk = (Button) dialog.getDialogPane().lookupButton(createButtonType);
+                    btOk.addEventFilter(ActionEvent.ACTION, e -> {
+                        if (!validateAndStore()) {
+                            e.consume();
+                        }
+                        DrawPane.createCanvas()
+                        System.out.println("Dialog closed successfully");
+                    });
+                    dialog.show();*/
                 });
                 menu.getItems().add(menuItem);
             }
@@ -68,4 +113,42 @@ public class AppMenuBar extends javafx.scene.control.MenuBar {
         fileSubMap.put("Exit", new String[]{"Exit"});
     }
 
+    private void createAndShowPopup(){
+        Popup popup = new Popup();
+        if(popup.isShowing()) popup.hide();
+        BorderPane borderPane = new BorderPane(new Button("this"));
+        borderPane.setMinSize(400, 200);
+        borderPane.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
+        popup.getContent().add(borderPane);
+        popup.setWidth(400);
+        popup.setWidth(400);
+
+        popup.show(getScene().getWindow());
+    }
+
+    public static class NewProjectModel {
+
+        private int width, height;
+
+        NewProjectModel(int width, int height) {
+            this.width = width;
+            this.height = height;
+        }
+
+        public void setWidth(int width) {
+            this.width = width;
+        }
+
+        public int getWidth() {
+            return width;
+        }
+
+        public void setHeight(int height) {
+            this.height = height;
+        }
+
+        public int getHeight() {
+            return height;
+        }
+    }
 }
