@@ -1,5 +1,6 @@
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
+import javafx.collections.ObservableList;
 import javafx.event.EventType;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -18,8 +19,7 @@ import java.util.Set;
 public class DrawPane extends StackPane {
 
     private final GlobalDrawPaneConfig drawAreaConfig;
-    private final Pane canvasPane;
-    Rectangle clipRect;
+    private Pane canvasPane;
 
     public DrawPane(GlobalDrawPaneConfig config, double width, double height){
         super();
@@ -29,22 +29,31 @@ public class DrawPane extends StackPane {
         setMinSize(600, 600);
         autosize();
         setAlignment(Pos.CENTER);
-        //context = createAndAddCanvas(width/2, height - 100);
-        canvasPane = new Pane();
+        /*canvasPane = new Pane();
         canvasPane.setStyle("-fx-background-color: white;");
         canvasPane.setPrefSize(400, 400);
         canvasPane.setMaxSize(400, 400);
         canvasPane.setEffect(new DropShadow(6, Color.BLACK));
 
-        getChildren().add(canvasPane);
-        clipRect = new Rectangle(400, 400);
+        Rectangle clipRect = new Rectangle(400, 400);
         canvasPane.setClip(clipRect);
-        //canvasPane.setTranslateX(-canvasPane.getBoundsInParent().getWidth() / 2);
-        //canvasPane.setTranslateY(-canvasPane.getBoundsInParent().getHeight() / 2);
-        addEventListeners();
+        getChildren().add(canvasPane);
+
+        addEventListeners(canvasPane);*/
     }
 
-    private <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> renderNodes(EventType<T> type, T event){
+    public static Pane createCanvas(int width, int height) {
+        Pane canvasPane = new Pane();
+        canvasPane.setStyle("-fx-background-color: white;");
+        canvasPane.setPrefSize(width, height);
+        canvasPane.setMaxSize(width, height);
+        canvasPane.setEffect(new DropShadow(6, Color.BLACK));
+
+        canvasPane.setClip(new Rectangle(width, height));
+        return canvasPane;
+    }
+
+    private <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> renderNodes(Pane canvasPane, EventType<T> type, T event){
         Map<String, LinkedHashMap<String, Node>> nodeTree = drawAreaConfig.getCurrentTool().draw(type, event);
         if(nodeTree != null) {
             LinkedHashMap<String, Node> primaryNodes = nodeTree.get("primary");
@@ -68,7 +77,7 @@ public class DrawPane extends StackPane {
         return nodeTree;
     }
 
-    private <T extends InputEvent> void unRenderNodes(EventType<T> type, T event){
+    private <T extends InputEvent> void unRenderNodes(Pane canvasPane, EventType<T> type, T event){
         Map<String, LinkedHashMap<String, Node>> unDrawNodeTree = drawAreaConfig.getCurrentTool().unDraw(type, event);
         if(unDrawNodeTree != null) {
             LinkedHashMap<String, Node> unDrawPrimaryNodes = unDrawNodeTree.get("primary");
@@ -87,23 +96,50 @@ public class DrawPane extends StackPane {
         }
     }
 
-    private void addEventListeners(){
+    /*
+    Note: I have used EventHandler to render and unrender because eventHandler traverses from the child
+    node up to the tree root while EventFilter executes from the root down to the child. By using
+    EventHandler, I am able to consume certain events before they bubble up to the root, e.g. when the
+    path controls (the smaller, black-filled ones) are clicked on, the event doesn't need to get to the
+    DrawPane's click event. This in my current opinion is more efficient than using booleans to maintain
+    states.
+     */
+    public void addEventListeners(Pane canvasPane){
         canvasPane.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
-            renderNodes(MouseEvent.MOUSE_PRESSED, event);
-            unRenderNodes(MouseEvent.MOUSE_PRESSED, event);
+            renderNodes(canvasPane, MouseEvent.MOUSE_PRESSED, event);
+            unRenderNodes(canvasPane, MouseEvent.MOUSE_PRESSED, event);
         });
         canvasPane.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
-            renderNodes(MouseEvent.MOUSE_MOVED, event);
-            unRenderNodes(MouseEvent.MOUSE_MOVED, event);
+            renderNodes(canvasPane, MouseEvent.MOUSE_MOVED, event);
+            unRenderNodes(canvasPane, MouseEvent.MOUSE_MOVED, event);
         });
         canvasPane.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
-            renderNodes(MouseEvent.MOUSE_DRAGGED, event);
-            unRenderNodes(MouseEvent.MOUSE_DRAGGED, event);
+            renderNodes(canvasPane, MouseEvent.MOUSE_DRAGGED, event);
+            unRenderNodes(canvasPane, MouseEvent.MOUSE_DRAGGED, event);
         });
         canvasPane.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
-            renderNodes(MouseEvent.MOUSE_RELEASED, event);
-            unRenderNodes(MouseEvent.MOUSE_RELEASED, event);
+            renderNodes(canvasPane, MouseEvent.MOUSE_RELEASED, event);
+            unRenderNodes(canvasPane, MouseEvent.MOUSE_RELEASED, event);
         });
     }
 
+    public String generateSVGHTML(){
+        ObservableList<Node> nodeContents = canvasPane.getChildren();
+        double width = canvasPane.getBoundsInLocal().getWidth();
+        double height = canvasPane.getBoundsInLocal().getHeight();
+        StringBuilder svgString = new StringBuilder("<svg viewBox=\"0 0 " + width + " " + height + "\">");
+        for (Node nodeContent : nodeContents) {
+            String tagName = nodeContent.getClass().getName().toLowerCase();
+            String textContent = "";
+            svgString.append("<")
+                    .append(tagName)
+                    .append(">")
+                    .append(textContent)
+                    .append("</")
+                    .append(tagName)
+                    .append(">");
+        }
+        svgString.append("</svg>");
+        return svgString.toString();
+    }
 }

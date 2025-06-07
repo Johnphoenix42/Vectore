@@ -1,17 +1,13 @@
 import apputil.GlobalDrawPaneConfig;
 import javafx.application.Application;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.input.InputEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.stage.Popup;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -22,6 +18,7 @@ import java.util.ArrayList;
 public class GraphicsApp extends Application {
     private static final Double WIDTH;
     private static final Double HEIGHT;
+    public static DrawPane drawingArea;
     static {
         Rectangle2D screenRect = Screen.getPrimary().getVisualBounds();
         WIDTH = screenRect.getWidth();
@@ -32,12 +29,12 @@ public class GraphicsApp extends Application {
     public void start(Stage primaryStage) throws  Exception{
         Group root = new Group();
         VBox vBox = new VBox();
-        Scene scene = new Scene(vBox, 600, 600);
+        Scene scene = new Scene(vBox, 800, 600);
         GlobalDrawPaneConfig drawPaneConfig = GlobalDrawPaneConfig.getInstance();
         AppMenuBar menuBar = new AppMenuBar();
         SubToolsPanel toolOptionsPanel = new SubToolsPanel();
         ToolsPanel<InputEvent> sideToolsPanel = new ToolsPanel<>(drawPaneConfig, toolOptionsPanel);
-        DrawPane drawingArea = new DrawPane(drawPaneConfig, WIDTH, HEIGHT);
+        drawingArea = new DrawPane(drawPaneConfig, WIDTH, HEIGHT);
 
         /*scene.widthProperty().addListener((observable, oldValue, newValue) -> {
             drawingArea.setPrefWidth((Double) newValue);
@@ -47,7 +44,7 @@ public class GraphicsApp extends Application {
         });*/
 
         VBox rightSidePanel = new VBox();
-        rightSidePanel.setPrefWidth(120);
+        rightSidePanel.setPrefWidth(180);
 
         HBox hBox = new HBox();
         VBox drawAreaVBox = new VBox(toolOptionsPanel, drawingArea);
