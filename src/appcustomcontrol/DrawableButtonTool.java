@@ -7,16 +7,13 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.ColorPicker;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Separator;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
@@ -64,10 +61,11 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
 
         protected LinkedHashMap<String, ArrayList<Node>> nodeMap;
         private final GlobalDrawPaneConfig config;
+        protected ColorPicker colorPicker;
 
         OptionButtonsBuilder(GlobalDrawPaneConfig config){
             this.config = config;
-            ColorPicker colorPicker = createColorPicker(config);
+            colorPicker = createColorPicker(config);
 
             Separator separator = new Separator(Orientation.VERTICAL);
 
@@ -78,10 +76,11 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             nodeMap.put("static", toolsList);
         }
 
-        private ColorPicker createColorPicker(GlobalDrawPaneConfig config) {
-            ColorPicker colorPicker = new ColorPicker(Color.BLACK);
+        public ColorPicker createColorPicker(GlobalDrawPaneConfig config) {
+            colorPicker = new ColorPicker(Color.BLACK);
             colorPicker.setPrefSize(BUTTON_WIDTH, BUTTON_HEIGHT);
-            colorPicker.setOnMouseClicked(event -> {
+            colorPicker.setOnAction(event -> {
+                System.out.println("          setOnActionClick is testing");
                 setColorPickerOnAction(colorPicker);
             });
             return colorPicker;

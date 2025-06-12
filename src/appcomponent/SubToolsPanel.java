@@ -1,17 +1,14 @@
-import apputil.GlobalDrawPaneConfig;
-import javafx.collections.ObservableList;
+package appcomponent;
+
 import javafx.geometry.Orientation;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
 
-import java.util.TreeMap;
-
 public class SubToolsPanel extends ToolBar {
 
-    SubToolsPanel(){
+    public SubToolsPanel(){
         super();
         autosize();
         setOrientation(Orientation.HORIZONTAL);
