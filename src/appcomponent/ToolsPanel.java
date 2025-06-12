@@ -1,17 +1,18 @@
+package appcomponent;
+
 import appcustomcontrol.*;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.ToolBar;
 import javafx.scene.input.InputEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
 
-public class ToolsPanel<T extends InputEvent> extends ToolBar {
+public class ToolsPanel extends ToolBar {
 
     private final GlobalDrawPaneConfig config;
     private final SubToolsPanel toolOptionsPanel;
@@ -28,7 +29,7 @@ public class ToolsPanel<T extends InputEvent> extends ToolBar {
 
     private void addButtons(){
         ObservableList<Node> items = toolOptionsPanel.getItems();
-        DrawableButtonTool rectangleButton = new RectangleButtonTool(config) {
+        RectangleButtonTool rectangleButton = new RectangleButtonTool(config) {
             @Override
             protected void setCurrentToolbarOptions() {
                 getOptions().switchToolOptions(items, getId());
@@ -46,7 +47,7 @@ public class ToolsPanel<T extends InputEvent> extends ToolBar {
             }
         };
 
-        DrawableButtonTool pathButton = new PathButtonTool(config) {
+        PathButtonTool pathButton = new PathButtonTool(config) {
             @Override
             protected void setCurrentToolbarOptions() {
                 getOptions().switchToolOptions(items, getId());

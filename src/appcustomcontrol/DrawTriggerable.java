@@ -10,8 +10,8 @@ import java.util.TreeMap;
 
 /**
  * This class can be implemented by any class that, through EventType(s), is expected to be capable of
- * drawing something on DrawPane.
- * @param <T> an Event class that encapsulates all Event types it requires from DrawPane to grant. It's
+ * drawing something on appcomponent.DrawPane.
+ * @param <T> an Event class that encapsulates all Event types it requires from appcomponent.DrawPane to grant. It's
  *           usually either InputEvent or MouseEvent
  */
 public interface DrawTriggerable {

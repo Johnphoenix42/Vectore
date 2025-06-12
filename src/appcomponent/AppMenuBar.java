@@ -1,3 +1,6 @@
+package appcomponent;
+
+import apputil.NewProjectModelConsumer;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -7,21 +10,25 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import java.util.*;
+import java.util.function.Consumer;
 
-public class AppMenuBar extends javafx.scene.control.MenuBar {
+public class AppMenuBar extends MenuBar {
 
-    private Map<String, LinkedHashMap<String, String[]>> menuTreeMap = new LinkedHashMap<>();
+    private final Map<String, LinkedHashMap<String, String[]>> menuTreeMap = new LinkedHashMap<>();
+    private final NewProjectModelConsumer consumer;
 
     public AppMenuBar(){
         super();
 
         ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-        Dialog<AppMenuBar.NewProjectModel> dialog = new Dialog<>();
+        Dialog<NewProjectModel> dialog = new Dialog<>();
         dialog.setHeaderText("Create new Project");
         ObservableList<ButtonType> buttonTypeList = dialog.getDialogPane().getButtonTypes();
         buttonTypeList.add(cancelButtonType);
         buttonTypeList.add(createButtonType);
+
+        consumer = new NewProjectModelConsumer();
 
         menuTreeMap.put("File", new LinkedHashMap<>());
         menuTreeMap.put("Edit", new LinkedHashMap<>());
@@ -33,16 +40,14 @@ public class AppMenuBar extends javafx.scene.control.MenuBar {
             Menu menu = new Menu(firstLevelEntry.getKey());
             Set<Map.Entry<String, String[]>> secondLevelEntries =  firstLevelEntry.getValue().entrySet();
             for(Map.Entry<String, String[]> secondLevelEntry : secondLevelEntries){
-                MenuItem menuItem = null;
+                MenuItem menuItem;
                 if(secondLevelEntry.getValue().length == 1)
                     menuItem = new MenuItem(secondLevelEntry.getValue()[0]);
                 else {
                     menuItem = new Menu(secondLevelEntry.getKey());
                     for(String menuName : secondLevelEntry.getValue()){
                         MenuItem thirdLevelItem = new MenuItem(menuName);
-                        thirdLevelItem.setOnAction(event -> {
-                            System.out.println("Secondary Action executed");
-                        });
+                        thirdLevelItem.setOnAction(event -> System.out.println("Secondary Action executed"));
                         ((Menu) menuItem).getItems().add(new MenuItem(menuName));
                     }
                 }
@@ -82,12 +87,7 @@ public class AppMenuBar extends javafx.scene.control.MenuBar {
 
                     dialog.showAndWait()
                             .filter(response -> response.getWidth() > 1 && response.getHeight() > 1)
-                            .ifPresent(response -> {
-                                Pane canvasPane = DrawPane.createCanvas(response.getWidth(), response.getHeight());
-                                DrawPane dp = GraphicsApp.drawingArea;
-                                dp.getChildren().add(canvasPane);
-                                GraphicsApp.drawingArea.addEventListeners(canvasPane);
-                            });
+                            .ifPresent(consumer);
 
                     /*final Button btOk = (Button) dialog.getDialogPane().lookupButton(createButtonType);
                     btOk.addEventFilter(ActionEvent.ACTION, e -> {
@@ -126,6 +126,10 @@ public class AppMenuBar extends javafx.scene.control.MenuBar {
         popup.show(getScene().getWindow());
     }
 
+    public NewProjectModelConsumer getConsumer() {
+        return consumer;
+    }
+
     public static class NewProjectModel {
 
         private int width, height;
@@ -151,4 +155,5 @@ public class AppMenuBar extends javafx.scene.control.MenuBar {
             return height;
         }
     }
+
 }

@@ -1,5 +1,6 @@
 package appcustomcontrol;
 
+import appcomponent.DrawPane;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
@@ -11,7 +12,6 @@ import javafx.scene.Node;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -19,8 +19,6 @@ import javafx.scene.shape.*;
 
 import javax.vecmath.Vector2d;
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public abstract class PathButtonTool extends DrawableButtonTool {
 
@@ -28,7 +26,9 @@ public abstract class PathButtonTool extends DrawableButtonTool {
     private static final String SECONDARY = "secondary";
     private static final String PRIMARY = "primary";
 
-    // PathButtonTool's own very nodeTree. It's "primary" childNode contains every path DrawPane still has, i.e. not deleted.
+    protected PathOptions optionButtonsBuilder;
+
+    // PathButtonTool's own very nodeTree. It's "primary" childNode contains every path appcomponent.DrawPane still has, i.e. not deleted.
     TreeMap<String, LinkedHashMap<String, Node>> nodeTree;
 
     // A global reference of renderTree so it does not get garbage-collected;
@@ -388,8 +388,11 @@ public abstract class PathButtonTool extends DrawableButtonTool {
 
     private Circle getControlPoint(QuadCurveTo quadCurveTo) {
         Circle controlPoint = new Circle(3);
-        controlPoint.setCenterX(quadCurveTo.getControlX());
-        controlPoint.setCenterY(quadCurveTo.getControlY());
+        controlPoint.setCenterX(Math.max(0, quadCurveTo.getControlX()));
+        controlPoint.setCenterY(Math.max(0, quadCurveTo.getControlY()));
+        controlPoint.setCenterX(Math.min(DrawPane.getPane().getWidth(), quadCurveTo.getControlX()));
+        controlPoint.setCenterY(Math.min(DrawPane.getPane().getHeight(), quadCurveTo.getControlY()));
+
         controlPoint.setOnMousePressed(Event::consume);
         controlPoint.setOnMouseMoved(Event::consume);
         controlPoint.setOnMouseDragged(controlPointEvent -> {
@@ -401,13 +404,22 @@ public abstract class PathButtonTool extends DrawableButtonTool {
             quadCurveTo.setControlY(eventY);
             controlPointEvent.consume();
         });
+        controlPoint.setOnMouseReleased(controlPointEvent -> {
+            System.out.println(controlPointEvent.getY() + ", "+
+                    controlPointEvent.getSceneY() + ", " + controlPointEvent.getScreenY());
+        });
         return controlPoint;
     }
 
     private Circle getControlPoint(CubicCurveTo cubicCurveTo, Point2D p) {
         Circle controlPoint = new Circle(3);
-        controlPoint.setCenterX(p.getX());
-        controlPoint.setCenterY(p.getY());
+        controlPoint.setCenterX(Math.max(0, p.getX()));
+        controlPoint.setCenterY(Math.max(0, p.getY()));
+        controlPoint.setCenterX(Math.min(DrawPane.getPane().getWidth(), p.getX()));
+        controlPoint.setCenterY(Math.min(DrawPane.getPane().getHeight(), p.getY()));
+
+        controlPoint.setOnMousePressed(Event::consume);
+        controlPoint.setOnMouseMoved(Event::consume);
         controlPoint.setOnMouseDragged(controlPointEvent -> {
             float eventX = (float) controlPointEvent.getX();
             float eventY = (float) controlPointEvent.getY();
@@ -422,8 +434,13 @@ public abstract class PathButtonTool extends DrawableButtonTool {
 
     private Circle getControlPoint(ArcTo arcTo, float xAxisRotation, boolean sweepFlag, boolean largeArcFlag) {
         Circle controlPoint = new Circle(3);
-        controlPoint.setCenterX(arcTo.getRadiusX());
-        controlPoint.setCenterY(arcTo.getRadiusY());
+        controlPoint.setCenterX(Math.max(0, arcTo.getRadiusX()));
+        controlPoint.setCenterY(Math.max(0, arcTo.getRadiusY()));
+        controlPoint.setCenterX(Math.min(DrawPane.getPane().getWidth(), arcTo.getRadiusX()));
+        controlPoint.setCenterY(Math.min(DrawPane.getPane().getHeight(), arcTo.getRadiusY()));
+
+        controlPoint.setOnMousePressed(Event::consume);
+        controlPoint.setOnMouseMoved(Event::consume);
         controlPoint.setOnMouseDragged(controlPointEvent -> {
             float eventX = (float) controlPointEvent.getX();
             float eventY = (float) controlPointEvent.getY();
@@ -436,12 +453,16 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         return controlPoint;
     }
 
-    public final class PathOptions extends OptionButtonsBuilder{
+    public class PathOptions extends OptionButtonsBuilder{
 
         ToggleButton fillToggleButton;
 
         private PathOptions(GlobalDrawPaneConfig config){
             super(config);
+            super.colorPicker.setOnAction(event -> {
+                System.out.println("          setOnActionClick is testing");
+                setColorPickerOnAction(colorPicker);
+            });
             config.setForegroundColor(config.getForegroundColor());
             config.setStrokeWidth(config.getStrokeWidth());
             ArrayList<Node> optionNodes = createOptions();
@@ -490,6 +511,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         protected void setColorPickerOnAction(ColorPicker colorPicker) {
             super.setColorPickerOnAction(colorPicker);
             if (fillToggleButton.isSelected()) {
+                System.out.println("          fillToggle is On");
                 activePath.setFill(colorPicker.getValue());
             }else{
                 activePath.setFill(null);
