@@ -52,14 +52,14 @@ public class AppMenuBar extends MenuBar {
                     }
                 }
                 menuItem.setOnAction(event -> {
-                    TextField widthTextField = new TextField();
+                    TextField widthTextField = new TextField("400");
                     HBox widthBox = new HBox(new Text("Width"), widthTextField);
                     widthBox.setAlignment(Pos.CENTER);
                     widthBox.setSpacing(25);
                     widthBox.setPadding(new Insets(10));
                     widthBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
 
-                    TextField heightTextField = new TextField();
+                    TextField heightTextField = new TextField("400");
                     HBox heightBox = new HBox(new Text("Height"), heightTextField);
                     heightBox.setAlignment(Pos.CENTER);
                     heightBox.setSpacing(25);

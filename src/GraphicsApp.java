@@ -50,8 +50,10 @@ public class GraphicsApp extends Application {
         generateSvg.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             text.setText(drawingArea.generateSVGHTML());
         });
-        Spinner<Integer> spinner = new Spinner<>(0, 10, 5, 1);
-        VBox rightSidePanel = new VBox(generateSvg, text, spinner);
+        Button b = new Button("Test button");
+        b.setOnAction(event -> System.out.println("First event"));
+        b.setOnAction(event -> System.out.println("Second event"));
+        VBox rightSidePanel = new VBox(generateSvg, text, b);
         rightSidePanel.setPrefWidth(180);
         rightSidePanel.setMaxWidth(240);
 

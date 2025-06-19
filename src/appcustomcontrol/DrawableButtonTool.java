@@ -2,12 +2,14 @@ package appcustomcontrol;
 
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
+import com.sun.istack.internal.NotNull;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Separator;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -50,18 +52,18 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
     @Override
     public void addClickListener(DrawableButtonTool prevSelectedButton) {
         setAsCurrentlySelectedTool();
-        setCurrentToolbarOptions();
+        setCurrentToolbarOptions(this);
     }
 
     public abstract OptionButtonsBuilder getOptions();
 
-    protected abstract void setCurrentToolbarOptions();
+    protected abstract void setCurrentToolbarOptions(DrawableButtonTool tool);
 
     public static class OptionButtonsBuilder{
 
         protected LinkedHashMap<String, ArrayList<Node>> nodeMap;
         private final GlobalDrawPaneConfig config;
-        protected ColorPicker colorPicker;
+        public ColorPicker colorPicker;
 
         OptionButtonsBuilder(GlobalDrawPaneConfig config){
             this.config = config;
@@ -76,17 +78,16 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             nodeMap.put("static", toolsList);
         }
 
-        public ColorPicker createColorPicker(GlobalDrawPaneConfig config) {
+        private ColorPicker createColorPicker(GlobalDrawPaneConfig config) {
             colorPicker = new ColorPicker(Color.BLACK);
             colorPicker.setPrefSize(BUTTON_WIDTH, BUTTON_HEIGHT);
-            colorPicker.setOnAction(event -> {
-                System.out.println("          setOnActionClick is testing");
-                setColorPickerOnAction(colorPicker);
-            });
+            /*colorPicker.setOnAction(event -> {
+                setColorPickerOnAction(colorPicker, null);
+            });*/
             return colorPicker;
         }
 
-        protected void setColorPickerOnAction(ColorPicker colorPicker){
+        protected void setColorPickerOnAction(ColorPicker colorPicker, @NotNull ToggleButton toggleButton){
             config.setForegroundColor(colorPicker.getValue());
         }
 
@@ -95,9 +96,10 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             return nodeMap.get(key);
         }
 
-        public final void switchToolOptions(ObservableList<Node> items, String newID){
+        public void switchToolOptions(ObservableList<Node> items, String newID){
             DrawableButtonTool prevTool = config.getPrevSelectedTool();
-            items.removeAll(prevTool.getOptions().getNodes(prevTool.getId()));
+            if (prevTool != null)
+                items.removeAll(prevTool.getOptions().getNodes(prevTool.getId()));
             items.addAll(getNodes(newID));
         }
     }

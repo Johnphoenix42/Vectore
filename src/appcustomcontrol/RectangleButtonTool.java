@@ -1,6 +1,8 @@
 package appcustomcontrol;
 
 import apputil.GlobalDrawPaneConfig;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
@@ -14,7 +16,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.util.StringConverter;
@@ -90,8 +91,8 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
     }
 
     @Override
-    public RectangleOptions getOptions() {
-        return (RectangleOptions) optionButtonsBuilder;
+    public DrawableButtonTool.OptionButtonsBuilder getOptions() {
+        return optionButtonsBuilder;
     }
 
     @Override
@@ -100,6 +101,8 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
     }
 
     public final class RectangleOptions extends OptionButtonsBuilder{
+
+        ToggleButton fillToggleButton;
 
         private RectangleOptions(GlobalDrawPaneConfig config){
             super(config);
@@ -110,20 +113,32 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
 
             Separator separator = new Separator(Orientation.VERTICAL);
 
-            Button widthButton = new Button("Width");
-            widthButton.setBackground(new Background(new BackgroundFill(Color.BLUE, null, null)));
-            widthButton.setTextFill(Color.WHITE);
-            widthButton.setPrefSize(BUTTON_WIDTH, BUTTON_HEIGHT);
-            Button heightButton = new Button("Height");
-            heightButton.setPrefSize(BUTTON_WIDTH, BUTTON_HEIGHT);
+            fillToggleButton = new ToggleButton("fill");
+            fillToggleButton.setOnAction(event -> {
+                if (activeRectangle == null) return;
+                if (fillToggleButton.isSelected()){
+                    activeRectangle.setFill(config.getForegroundColor());
+                }else{
+                    activeRectangle.setFill(null);
+                }
+            });
+            ToggleButton strokeToggleButton = new ToggleButton("Stroke");
+            strokeToggleButton.setOnAction(event -> {
+                if (activeRectangle == null) return;
+                if (strokeToggleButton.isSelected()){
+                    activeRectangle.setStroke(config.getForegroundColor());
+                }else{
+                    activeRectangle.setStroke(null);
+                }
+            });
 
             ArrayList<Node> nodeList = nodeMap.getOrDefault(getId(), new ArrayList<>());
             nodeList.add(widthBox);
             nodeList.add(heightBox);
             nodeList.add(rotationBox);
             nodeList.add(separator);
-            nodeList.add(widthButton);
-            nodeList.add(heightButton);
+            nodeList.add(fillToggleButton);
+            nodeList.add(strokeToggleButton);
             nodeMap.put(getId(), nodeList);
         }
 
@@ -215,6 +230,27 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             return textInput;
         }
 
+        @Override
+        protected void setColorPickerOnAction(ColorPicker colorPicker, ToggleButton toggleButton) {
+            super.setColorPickerOnAction(colorPicker, toggleButton);
+            System.out.println("Rectangle");
+            //if (activeRectangle == null) return;
+            if (toggleButton.isSelected()) {
+                activeRectangle.setFill(colorPicker.getValue());
+            }else{
+                activeRectangle.setFill(null);
+            }
+        }
+
+        @Override
+        public void switchToolOptions(ObservableList<Node> items, String newID) {
+            super.switchToolOptions(items, newID);
+            colorPicker.setOnAction(event -> {
+                System.out.println("rectangle set on action");
+                config.setSelectedNode(activeRectangle);
+                setColorPickerOnAction(colorPicker, fillToggleButton);
+            });
+        }
     }
 
     private class DoubleSpinnerValueFactory extends SpinnerValueFactory<Double> {

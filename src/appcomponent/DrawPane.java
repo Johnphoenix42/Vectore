@@ -19,6 +19,7 @@ public class DrawPane extends StackPane {
 
     private final GlobalDrawPaneConfig drawAreaConfig;
     private static Pane canvasPane;
+    private Node activeCanvasNode = null;
 
     public DrawPane(GlobalDrawPaneConfig config, double width, double height){
         super();
@@ -138,4 +139,13 @@ public class DrawPane extends StackPane {
     public static Pane getPane() {
         return canvasPane;
     }
+
+    public void setActiveCanvasNode (Node activeNode) {
+        this.activeCanvasNode = activeNode;
+    }
+
+    public Node getActiveCanvasNode(){
+        return activeCanvasNode;
+    }
+
 }
