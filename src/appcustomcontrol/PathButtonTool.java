@@ -4,6 +4,7 @@ import appcomponent.DrawPane;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventType;
 import javafx.geometry.Point2D;
@@ -25,8 +26,6 @@ public abstract class PathButtonTool extends DrawableButtonTool {
     public static final String SHAPE_NAMESPACE = "path_";
     private static final String SECONDARY = "secondary";
     private static final String PRIMARY = "primary";
-
-    protected PathOptions optionButtonsBuilder;
 
     // PathButtonTool's own very nodeTree. It's "primary" childNode contains every path appcomponent.DrawPane still has, i.e. not deleted.
     TreeMap<String, LinkedHashMap<String, Node>> nodeTree;
@@ -77,7 +76,6 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         merge(renderTree.get(SECONDARY), globalRenderTree.get(SECONDARY));
         if (eventType.equals(MouseEvent.MOUSE_PRESSED)) {
             drawOnMousePressed((MouseEvent) event, renderTree);
-            System.out.println(globalRenderTree.get(SECONDARY));
             globalRenderTree.get(PRIMARY).clear();
             globalRenderTree.get(SECONDARY).clear();
         } else if (eventType == MouseEvent.MOUSE_DRAGGED) {
@@ -123,8 +121,8 @@ public abstract class PathButtonTool extends DrawableButtonTool {
     }
 
     @Override
-    public PathOptions getOptions() {
-        return (PathOptions) optionButtonsBuilder;
+    public DrawableButtonTool.OptionButtonsBuilder getOptions() {
+        return optionButtonsBuilder;
     }
 
     @Override
@@ -180,7 +178,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         mousePointX = x;
         mousePointY = y;
 
-        Circle circle = getBreakPointControl(x, y, renderTree);
+        Circle circle = createBreakPoint(x, y, renderTree);
         if (skipDrawBreakpoint) {
             return;
         }
@@ -207,15 +205,15 @@ public abstract class PathButtonTool extends DrawableButtonTool {
      * @param renderTree this node tree this tool gives draw pane to render.
      * @return the circle object which is the breakpoint node.
      */
-    private Circle getBreakPointControl(double x, double y, Map<String, LinkedHashMap<String, Node>> renderTree) {
-        Circle circle = new Circle(x, y, config.getStrokeWidth()+4);
-        circle.setFill(Color.TRANSPARENT);
-        circle.setStroke(Color.GRAY);
-        circle.setId("point_" + shapeCounter + "_" + breakPointCounter);
+    private Circle createBreakPoint(double x, double y, Map<String, LinkedHashMap<String, Node>> renderTree) {
+        Circle breakPoint = new Circle(x, y, config.getStrokeWidth()+4);
+        breakPoint.setFill(Color.TRANSPARENT);
+        breakPoint.setStroke(Color.GRAY);
+        breakPoint.setId("point_" + shapeCounter + "_" + breakPointCounter);
         breakPointCounter++;
-        circle.setOnMousePressed(event -> {
+        breakPoint.setOnMousePressed(event -> {
             if(isPathDrawing) {
-                if (circle == nodeTree.get(SECONDARY).get("point_" + shapeCounter + "_0")){
+                if (breakPoint == nodeTree.get(SECONDARY).get("point_" + shapeCounter + "_0")){
                     isPathDrawing = false;
                     skipDrawBreakpoint = false;
                     //close the path.
@@ -237,11 +235,10 @@ public abstract class PathButtonTool extends DrawableButtonTool {
                 } else { //circle clicked is not the first breakpoint
                     System.out.println("circle clicked is not the first breakpoint");
                 }
-                isPathOpenReady = false;
             }
             else {
                 ObservableList<PathElement> pathElements = activePath.getElements();
-                short index = Short.parseShort(circle.getId().split("_")[2]);
+                short index = Short.parseShort(breakPoint.getId().split("_")[2]);
                 try {
                     PathElement pathElement = pathElements.get(index);
                     LinkedHashMap<String, Node> secondaryMainTree = nodeTree.get(SECONDARY);
@@ -276,22 +273,22 @@ public abstract class PathButtonTool extends DrawableButtonTool {
                 }catch (IndexOutOfBoundsException e) {
                     AppLogger.log(getClass(), 221, "index = " + 4 + " is >= " + pathElements.size());
                 }
-                isPathOpenReady = false;
                 //event.consume();
             }
+            isPathOpenReady = false;
         });
-        circle.setOnMouseDragged(event -> {
+        breakPoint.setOnMouseDragged(event -> {
             if(isPathDrawing && !isPathOpenReady){
                 AppLogger.log(getClass(), 229, "drag not executing");
                 return;
             }
             double eventX = event.getX();
             double eventY = event.getY();
-            circle.setCenterX(event.getX());
-            circle.setCenterY(event.getY());
+            breakPoint.setCenterX(event.getX());
+            breakPoint.setCenterY(event.getY());
             Path pathShape = activePath;
             ObservableList<PathElement> pathShapeElementList = pathShape.getElements();
-            short index = Short.parseShort(circle.getId().split("_")[2]);
+            short index = Short.parseShort(breakPoint.getId().split("_")[2]);
             if(!isLastPathElementRemoved) {
                 PathElement pathElement = pathShapeElementList.get(index);
                 setPathElementPointXAndY(pathElement, eventX, eventY);
@@ -301,10 +298,10 @@ public abstract class PathButtonTool extends DrawableButtonTool {
                 }
             }
         });
-        circle.setOnMouseEntered(event -> {
-            circle.setCursor(Cursor.CROSSHAIR);
+        breakPoint.setOnMouseEntered(event -> {
+            breakPoint.setCursor(Cursor.CROSSHAIR);
         });
-        return circle;
+        return breakPoint;
     }
 
     private <T extends PathElement> void setPathElementPointXAndY(T pathElement, double x, double y){
@@ -346,19 +343,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         ObservableList<PathElement> pathShapeElementList = pathShape.getElements();
         if(!isLastPathElementRemoved){
             if(pathShapeElementList.get(pathShapeElementList.size() - 1) instanceof MoveTo) return;
-            pathShapeElementList.remove(pathShapeElementList.size() - 1, pathShapeElementList.size());
-            //todo: add pathElement into some kind of history for undo and redo operations
-            isLastPathElementRemoved = true;
-            PathElement curvePathElement = null;
-            if(Objects.equals(config.getCurveType(), "Quadratic")) {
-                curvePathElement = new QuadCurveTo(x, y, mousePointX, mousePointY);
-            }else if(Objects.equals(config.getCurveType(), "Cubic")){
-                curvePathElement = new CubicCurveTo(x, y, (x + mousePointX) / 2, (y + mousePointY) / 2, mousePointX, mousePointY);
-            }else {
-                curvePathElement = new ArcTo(Math.abs(mousePointX - x), Math.abs(mousePointY - y),
-                        45, mousePointX, mousePointY, true, false);
-            }
-            pathShape.getElements().add(curvePathElement);
+            boolean pathElement = switchPathElementCurveType(pathShapeElementList.size() - 1, x, y);
         }else {
             PathElement curvePathElement = pathShapeElementList.get(pathShapeElementList.size() - 1);
             if (curvePathElement instanceof QuadCurveTo){
@@ -380,6 +365,23 @@ public abstract class PathButtonTool extends DrawableButtonTool {
                 ((ArcTo) curvePathElement).setRadiusY(Math.abs(mousePointY - y));
             }
         }
+    }
+
+    private boolean switchPathElementCurveType (int index, double ...coord) {
+        ObservableList<PathElement> pathShapeElementList = activePath.getElements();
+        pathShapeElementList.remove(index, pathShapeElementList.size());
+        //todo: add pathElement into some kind of history for undo and redo operations
+        isLastPathElementRemoved = true;
+        PathElement curvePathElement = null;
+        if(Objects.equals(config.getCurveType(), "Quadratic")) {
+            curvePathElement = new QuadCurveTo(coord[0], coord[1], mousePointX, mousePointY);
+        }else if(Objects.equals(config.getCurveType(), "Cubic")){
+            curvePathElement = new CubicCurveTo(coord[0], coord[1], (coord[0] + mousePointX) / 2, (coord[1] + mousePointY) / 2, mousePointX, mousePointY);
+        }else {
+            curvePathElement = new ArcTo(Math.abs(mousePointX - coord[0]), Math.abs(mousePointY - coord[1]),
+                    45, mousePointX, mousePointY, true, false);
+        }
+        return activePath.getElements().add(curvePathElement);
     }
 
     private void drawOnMouseReleased(MouseEvent ev, TreeMap<String, LinkedHashMap<String, Node>> renderTree){
@@ -459,10 +461,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
 
         private PathOptions(GlobalDrawPaneConfig config){
             super(config);
-            super.colorPicker.setOnAction(event -> {
-                System.out.println("          setOnActionClick is testing");
-                setColorPickerOnAction(colorPicker);
-            });
+            colorPicker.setPrefSize(60, 40);
             config.setForegroundColor(config.getForegroundColor());
             config.setStrokeWidth(config.getStrokeWidth());
             ArrayList<Node> optionNodes = createOptions();
@@ -482,6 +481,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
 
             fillToggleButton = new ToggleButton("fill");
             fillToggleButton.setOnAction(event -> {
+                if (activePath == null) return;
                 if (fillToggleButton.isSelected()){
                     activePath.setFill(config.getForegroundColor());
                 }else{
@@ -490,15 +490,16 @@ public abstract class PathButtonTool extends DrawableButtonTool {
             });
             ToggleButton strokeToggleButton = new ToggleButton("Stroke");
             strokeToggleButton.setOnAction(event -> {
+                if (activePath == null) return;
                 if (strokeToggleButton.isSelected()){
                     activePath.setStroke(config.getForegroundColor());
                 }else{
                     activePath.setStroke(null);
                 }
             });
-            //ToggleGroup toggleGroup = new ToggleGroup();
+            // ToggleGroup toggleGroup = new ToggleGroup();
 
-            //fillToggleButton.setToggleGroup(toggleGroup);
+            // fillToggleButton.setToggleGroup(toggleGroup);
 
             ArrayList<Node> nodeList = nodeMap.getOrDefault(getId(), new ArrayList<>());
             nodeList.add(curveType);
@@ -508,14 +509,25 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         }
 
         @Override
-        protected void setColorPickerOnAction(ColorPicker colorPicker) {
-            super.setColorPickerOnAction(colorPicker);
-            if (fillToggleButton.isSelected()) {
-                System.out.println("          fillToggle is On");
-                activePath.setFill(colorPicker.getValue());
-            }else{
-                activePath.setFill(null);
+        protected void setColorPickerOnAction(ColorPicker colorPicker, ToggleButton toggleButton) {
+            super.setColorPickerOnAction(colorPicker, toggleButton);
+            System.out.println("Path");
+            Shape canvasActiveNode = (Shape) config.getSelectedNode();
+            if (canvasActiveNode == null) return;
+            if (toggleButton.isSelected()) {
+                canvasActiveNode.setFill(colorPicker.getValue());
+            } else {
+                canvasActiveNode.setFill(null);
             }
+        }
+
+        @Override
+        public void switchToolOptions(ObservableList<Node> items, String newID) {
+            super.switchToolOptions(items, newID);
+            colorPicker.setOnAction(event -> {
+                config.setSelectedNode(activePath);
+                setColorPickerOnAction(colorPicker, fillToggleButton);
+            });
         }
     }
 }

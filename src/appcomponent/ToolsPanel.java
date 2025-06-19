@@ -7,7 +7,6 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.ToolBar;
-import javafx.scene.input.InputEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
@@ -16,6 +15,7 @@ public class ToolsPanel extends ToolBar {
 
     private final GlobalDrawPaneConfig config;
     private final SubToolsPanel toolOptionsPanel;
+    DrawableButtonTool.OptionButtonsBuilder optionButtonsBuilder;
 
     public ToolsPanel(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel){
         super();
@@ -31,39 +31,47 @@ public class ToolsPanel extends ToolBar {
         ObservableList<Node> items = toolOptionsPanel.getItems();
         RectangleButtonTool rectangleButton = new RectangleButtonTool(config) {
             @Override
-            protected void setCurrentToolbarOptions() {
-                getOptions().switchToolOptions(items, getId());
+            protected void setCurrentToolbarOptions(DrawableButtonTool tool) {
+                optionButtonsBuilder = tool.getOptions();
+                optionButtonsBuilder.switchToolOptions(items, getId());
+
+                System.out.println(optionButtonsBuilder);
+                optionButtonsBuilder.colorPicker.setOnAction(event -> System.out.println("Test action"));
             }
         };
-        rectangleButton.setAsCurrentlySelectedTool();
-        DrawableButtonTool.OptionButtonsBuilder optionButtonsBuilder = rectangleButton.getOptions();
-        items.addAll(optionButtonsBuilder.getNodes("static"));
-        items.addAll(optionButtonsBuilder.getNodes(rectangleButton.getId()));
 
-        DrawableButtonTool circleButton = new CircleButtonTool(config) {
+        CircleButtonTool circleButton = new CircleButtonTool(config) {
             @Override
-            protected void setCurrentToolbarOptions() {
+            protected void setCurrentToolbarOptions(DrawableButtonTool tool) {
                 getOptions().switchToolOptions(items, getId());
+                optionButtonsBuilder = this.getOptions();
             }
         };
 
         PathButtonTool pathButton = new PathButtonTool(config) {
             @Override
-            protected void setCurrentToolbarOptions() {
-                getOptions().switchToolOptions(items, getId());
+            protected void setCurrentToolbarOptions(DrawableButtonTool tool) {
+                optionButtonsBuilder = tool.getOptions();
+                optionButtonsBuilder.switchToolOptions(items, getId());
             }
         };
 
-        DrawableButtonTool textButton = new TextButtonTool(config) {
+        TextButtonTool textButton = new TextButtonTool(config) {
             @Override
-            protected void setCurrentToolbarOptions() {
-                getOptions().switchToolOptions(items, getId());
+            protected void setCurrentToolbarOptions(DrawableButtonTool tool) {
+                optionButtonsBuilder = tool.getOptions();
+                optionButtonsBuilder.switchToolOptions(items, getId());
             }
         };
+        optionButtonsBuilder = pathButton.getOptions();
+        items.addAll(optionButtonsBuilder.getNodes("static"));
+        pathButton.setAsCurrentlySelectedTool();
+        optionButtonsBuilder.switchToolOptions(items, pathButton.getId());
+        /*items.addAll(optionButtonsBuilder.getNodes(pathButton.getId()));*/
 
         getItems().addAll(rectangleButton, circleButton, pathButton, textButton);
 
-        AppLogger.log(getClass(), 61, config.getCurrentTool().getClass().getName());
+        //AppLogger.log(getClass(), 61, config.getCurrentTool().getClass().getName());
     }
 
 }

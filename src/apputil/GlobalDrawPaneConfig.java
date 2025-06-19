@@ -17,7 +17,7 @@ public final class GlobalDrawPaneConfig {
     private double strokeWidth = 1;
     private DrawableButtonTool currentTool;
     private DrawableButtonTool prevSelectedTool;
-    private Node selectedNode;
+    private Node selectedNode; // The one node on canvas that is active or currently selected.
     private static final GlobalDrawPaneConfig globalDrawPaneConfig = new GlobalDrawPaneConfig();
 
     public void setForegroundColor(Paint foregroundColor){
@@ -62,5 +62,13 @@ public final class GlobalDrawPaneConfig {
 
     public DrawableButtonTool getPrevSelectedTool(){
         return prevSelectedTool;
+    }
+
+    public Node getSelectedNode() {
+        return selectedNode;
+    }
+
+    public void setSelectedNode(Node selectedNode) {
+        this.selectedNode = selectedNode;
     }
 }
