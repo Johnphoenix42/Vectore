@@ -18,6 +18,16 @@ import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
+/**
+ * Todo: Change the stroke toggle button to a Spinner that define the stroke-width with 0 as min and 10 as max.
+ *      When the color is set a dialog or popup should appear with at least 3 options to choose which property - fill, stroke or none, the
+ *      color change is for or should affect.
+ * Todo: switchPathElementCurveType() in PathButtonTool, shouldn't be adding to path element, should maybe be setting.
+ *      also should not be using Combo box, <code>Spinner<String></code> is better.
+ * Todo: focus on TextButtonTool and CircleButtonTool and after that, add a Select button.
+ * Todo: Show color palette so users can switch between different color options they've chosen for their project (maybe with shortcuts too).
+ * Todo: An export and import (svg) menu button.
+ */
 public class GraphicsApp extends Application {
     private static final Double WIDTH;
     private static final Double HEIGHT;
@@ -50,10 +60,7 @@ public class GraphicsApp extends Application {
         generateSvg.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             text.setText(drawingArea.generateSVGHTML());
         });
-        Button b = new Button("Test button");
-        b.setOnAction(event -> System.out.println("First event"));
-        b.setOnAction(event -> System.out.println("Second event"));
-        VBox rightSidePanel = new VBox(generateSvg, text, b);
+        VBox rightSidePanel = new VBox(generateSvg, text);
         rightSidePanel.setPrefWidth(180);
         rightSidePanel.setMaxWidth(240);
 

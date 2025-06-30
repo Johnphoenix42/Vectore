@@ -157,9 +157,10 @@ public abstract class PathButtonTool extends DrawableButtonTool {
             isLastPathElementRemoved = false;
             shapeCounter++;
             breakPointCounter = 0;
-            pathShape.setOnMouseClicked(event -> {
+            config.setSelectedNode(pathShape);
+            /*pathShape.setOnMouseClicked(event -> {
                 activePath = pathShape;
-            });
+            });*/
         }else {
             Path pathShape = activePath;
             ObservableList<PathElement> pathElements = pathShape.getElements();
@@ -279,7 +280,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         });
         breakPoint.setOnMouseDragged(event -> {
             if(isPathDrawing && !isPathOpenReady){
-                AppLogger.log(getClass(), 229, "drag not executing");
+                AppLogger.log(getClass(), 282, "drag not executing");
                 return;
             }
             double eventX = event.getX();
@@ -508,10 +509,16 @@ public abstract class PathButtonTool extends DrawableButtonTool {
             return nodeList;
         }
 
+        /**
+         * Applies selected color from a ColorPicker to a shape, using ToggleButton as a switch.
+         * If no canvas shape is selected, nothing happens.
+         * @param colorPicker control used to select a color.
+         * @param toggleButton control that will be used as the switch. When the toggle button is on, color is
+         *                     added. When off, color is removed, i.e. shape is hollow, not filled with TRANSPARENT
+         */
         @Override
         protected void setColorPickerOnAction(ColorPicker colorPicker, ToggleButton toggleButton) {
             super.setColorPickerOnAction(colorPicker, toggleButton);
-            System.out.println("Path");
             Shape canvasActiveNode = (Shape) config.getSelectedNode();
             if (canvasActiveNode == null) return;
             if (toggleButton.isSelected()) {
@@ -524,9 +531,9 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         @Override
         public void switchToolOptions(ObservableList<Node> items, String newID) {
             super.switchToolOptions(items, newID);
+            config.setSelectedNode(null);
             colorPicker.setOnAction(event -> {
-                config.setSelectedNode(activePath);
-                setColorPickerOnAction(colorPicker, fillToggleButton);
+                this.setColorPickerOnAction(colorPicker, fillToggleButton);
             });
         }
     }

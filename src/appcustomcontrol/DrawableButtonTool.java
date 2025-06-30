@@ -3,6 +3,7 @@ package appcustomcontrol;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import com.sun.istack.internal.NotNull;
+import com.sun.istack.internal.Nullable;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -15,11 +16,12 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Shape;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-public abstract class DrawableButtonTool extends ToolbarButton implements DrawTriggerable{
+public abstract class DrawableButtonTool extends ToolbarButton implements DrawTriggerable, OptionToolbarSettable{
 
     protected OptionButtonsBuilder optionButtonsBuilder;
 
@@ -57,7 +59,7 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
 
     public abstract OptionButtonsBuilder getOptions();
 
-    protected abstract void setCurrentToolbarOptions(DrawableButtonTool tool);
+    public abstract void setCurrentToolbarOptions(DrawableButtonTool tool);
 
     public static class OptionButtonsBuilder{
 
@@ -87,8 +89,9 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             return colorPicker;
         }
 
-        protected void setColorPickerOnAction(ColorPicker colorPicker, @NotNull ToggleButton toggleButton){
+        protected void setColorPickerOnAction(ColorPicker colorPicker, @Nullable ToggleButton toggleButton){
             config.setForegroundColor(colorPicker.getValue());
+
         }
 
         public ArrayList<Node> getNodes(String key) {
