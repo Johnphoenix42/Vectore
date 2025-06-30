@@ -56,9 +56,10 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             mouseStartPointX = ev.getX();
             mouseStartPointY = ev.getY();
             Rectangle rectangle = new Rectangle(0, 0);
+            rectangle.setFill(null);
             rectangle.setTranslateX(mouseStartPointX);
             rectangle.setTranslateY(mouseStartPointY);
-            rectangle.setFill(config.getForegroundColor());
+            //rectangle.setFill(config.getForegroundColor());
             rectangle.setStrokeWidth(config.getStrokeWidth());
             rectangle.setStroke(super.config.getForegroundColor());
             activeRectangle = rectangle;
@@ -68,6 +69,7 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             renderTree.get("primary").put(SHAPE_NAMESPACE + shapeCounter, rectangle);
             shapeCounter++;
             isDrawing = true;
+            config.setSelectedNode(activeRectangle);
         }else {
             activeRectangle.setTranslateX(Math.min(mouseStartPointX, ev.getX()));
             activeRectangle.setTranslateY(Math.min(mouseStartPointY, ev.getY()));
@@ -237,7 +239,7 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             //if (activeRectangle == null) return;
             if (toggleButton.isSelected()) {
                 activeRectangle.setFill(colorPicker.getValue());
-            }else{
+            } else {
                 activeRectangle.setFill(null);
             }
         }
@@ -245,11 +247,7 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
         @Override
         public void switchToolOptions(ObservableList<Node> items, String newID) {
             super.switchToolOptions(items, newID);
-            colorPicker.setOnAction(event -> {
-                System.out.println("rectangle set on action");
-                config.setSelectedNode(activeRectangle);
-                setColorPickerOnAction(colorPicker, fillToggleButton);
-            });
+            config.setSelectedNode(null);
         }
     }
 

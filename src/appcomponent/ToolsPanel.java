@@ -31,18 +31,15 @@ public class ToolsPanel extends ToolBar {
         ObservableList<Node> items = toolOptionsPanel.getItems();
         RectangleButtonTool rectangleButton = new RectangleButtonTool(config) {
             @Override
-            protected void setCurrentToolbarOptions(DrawableButtonTool tool) {
+            public void setCurrentToolbarOptions(DrawableButtonTool tool) {
                 optionButtonsBuilder = tool.getOptions();
                 optionButtonsBuilder.switchToolOptions(items, getId());
-
-                System.out.println(optionButtonsBuilder);
-                optionButtonsBuilder.colorPicker.setOnAction(event -> System.out.println("Test action"));
             }
         };
 
         CircleButtonTool circleButton = new CircleButtonTool(config) {
             @Override
-            protected void setCurrentToolbarOptions(DrawableButtonTool tool) {
+            public void setCurrentToolbarOptions(DrawableButtonTool tool) {
                 getOptions().switchToolOptions(items, getId());
                 optionButtonsBuilder = this.getOptions();
             }
@@ -50,28 +47,37 @@ public class ToolsPanel extends ToolBar {
 
         PathButtonTool pathButton = new PathButtonTool(config) {
             @Override
-            protected void setCurrentToolbarOptions(DrawableButtonTool tool) {
-                optionButtonsBuilder = tool.getOptions();
+            public void setCurrentToolbarOptions(DrawableButtonTool tool) {
+                //optionButtonsBuilder = tool.getOptions();
                 optionButtonsBuilder.switchToolOptions(items, getId());
             }
         };
 
         TextButtonTool textButton = new TextButtonTool(config) {
             @Override
-            protected void setCurrentToolbarOptions(DrawableButtonTool tool) {
+            public void setCurrentToolbarOptions(DrawableButtonTool tool) {
                 optionButtonsBuilder = tool.getOptions();
                 optionButtonsBuilder.switchToolOptions(items, getId());
             }
         };
-        optionButtonsBuilder = pathButton.getOptions();
-        items.addAll(optionButtonsBuilder.getNodes("static"));
-        pathButton.setAsCurrentlySelectedTool();
-        optionButtonsBuilder.switchToolOptions(items, pathButton.getId());
         /*items.addAll(optionButtonsBuilder.getNodes(pathButton.getId()));*/
+        setInitialSelectedTool(rectangleButton, items);
 
         getItems().addAll(rectangleButton, circleButton, pathButton, textButton);
 
         //AppLogger.log(getClass(), 61, config.getCurrentTool().getClass().getName());
+    }
+
+    /**
+     * Sets the currently selected toolbar button.
+     * @param button
+     * @param items
+     */
+    private void setInitialSelectedTool(DrawableButtonTool button, ObservableList<Node> items) {
+        optionButtonsBuilder = button.getOptions();
+        items.addAll(optionButtonsBuilder.getNodes("static"));
+        button.setAsCurrentlySelectedTool();
+        optionButtonsBuilder.switchToolOptions(items, button.getId());
     }
 
 }
