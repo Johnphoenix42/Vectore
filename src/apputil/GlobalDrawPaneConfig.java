@@ -1,5 +1,6 @@
 package apputil;
 
+import appcomponent.DrawPane;
 import appcustomcontrol.DrawableButtonTool;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
@@ -19,6 +20,7 @@ public final class GlobalDrawPaneConfig {
     private DrawableButtonTool prevSelectedTool;
     private Node selectedNode; // The one node on canvas that is active or currently selected.
     private static final GlobalDrawPaneConfig globalDrawPaneConfig = new GlobalDrawPaneConfig();
+    private DrawPane.CanvasActionMode canvasActionMode;
 
     public void setForegroundColor(Paint foregroundColor){
         this.foregroundColor = foregroundColor;
@@ -70,5 +72,13 @@ public final class GlobalDrawPaneConfig {
 
     public void setSelectedNode(Node selectedNode) {
         this.selectedNode = selectedNode;
+    }
+
+    public void setActionMode(DrawPane.CanvasActionMode canvasActionMode) {
+        this.canvasActionMode = canvasActionMode;
+    }
+
+    public DrawPane.CanvasActionMode getCanvasActionMode() {
+        return canvasActionMode;
     }
 }

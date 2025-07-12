@@ -3,7 +3,6 @@ package appcustomcontrol;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -12,17 +11,17 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 public abstract class DrawableButtonTool extends ToolbarButton implements DrawTriggerable, OptionToolbarSettable{
 
+    public static final String SECONDARY = "secondary";
+    public static final String PRIMARY = "primary";
     protected OptionButtonsBuilder optionButtonsBuilder;
 
     public DrawableButtonTool(String label, GlobalDrawPaneConfig config) {
@@ -62,48 +61,87 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
     public abstract void setCurrentToolbarOptions(DrawableButtonTool tool);
 
     public static class OptionButtonsBuilder{
+        public static final String GLOBAL_NODE_OPTIONS = "static";
 
-        protected LinkedHashMap<String, ArrayList<Node>> nodeMap;
+        protected LinkedHashMap<String, LinkedHashMap<String, Node>> nodeMap;
         private final GlobalDrawPaneConfig config;
-        public ColorPicker colorPicker;
 
         OptionButtonsBuilder(GlobalDrawPaneConfig config){
             this.config = config;
-            colorPicker = createColorPicker(config);
+            ColorPicker colorPicker = new ColorPicker(Color.BLACK);
+            colorPicker.setPrefSize(BUTTON_WIDTH, 30);
+            ToggleButton fillToggleButton = new ToggleButton("Fill");
+            ToggleButton strokeToggleButton = new ToggleButton("Stroke");
+            strokeToggleButton.setSelected(true);
 
             Separator separator = new Separator(Orientation.VERTICAL);
 
             nodeMap = new LinkedHashMap<>();
-            ArrayList<Node> toolsList = new ArrayList<>();
-            toolsList.add(colorPicker);
-            toolsList.add(separator);
-            nodeMap.put("static", toolsList);
+            LinkedHashMap<String, Node> toolsMap = new LinkedHashMap<>();
+            toolsMap.put("color_picker", colorPicker);
+            toolsMap.put("fill_toggle_button", fillToggleButton);
+            toolsMap.put("stroke_toggle_button", strokeToggleButton);
+            toolsMap.put("separator", separator);
+            nodeMap.put(GLOBAL_NODE_OPTIONS, toolsMap);
+
+            colorPicker.setOnAction(event -> {
+                this.setColorPickerOnAction(colorPicker, (ToggleButton) toolsMap.get("fill_toggle_button"));
+            });
+            fillToggleButton.setOnAction(event -> {
+                this.setColorPickerOnAction(colorPicker, (ToggleButton) event.getSource());
+            });
+            strokeToggleButton.setOnAction(event -> {
+                this.setColorPickerOnAction(colorPicker, (ToggleButton) event.getSource());
+            });
         }
 
-        private ColorPicker createColorPicker(GlobalDrawPaneConfig config) {
-            colorPicker = new ColorPicker(Color.BLACK);
-            colorPicker.setPrefSize(BUTTON_WIDTH, BUTTON_HEIGHT);
-            /*colorPicker.setOnAction(event -> {
-                setColorPickerOnAction(colorPicker, null);
-            });*/
-            return colorPicker;
-        }
-
-        protected void setColorPickerOnAction(ColorPicker colorPicker, @Nullable ToggleButton toggleButton){
+        /**
+         * Applies selected color from a ColorPicker to a shape, using ToggleButton as a switch.
+         * If no canvas shape is selected, nothing happens.
+         * @param colorPicker control used to select a color.
+         * @param toggleButton control that will be used as the switch. When the toggle button is on, color is
+         *                     added. When off, color is removed, i.e. shape is hollow, not filled with TRANSPARENT
+         */
+        protected void setColorPickerOnAction(ColorPicker colorPicker, @NotNull ToggleButton toggleButton){
             config.setForegroundColor(colorPicker.getValue());
-
+            Shape canvasActiveNode = (Shape) config.getSelectedNode();
+            if (canvasActiveNode == null) return;
+            LinkedHashMap<String, Node> toolsMap = getNodes(GLOBAL_NODE_OPTIONS);
+            if (toggleButton.isSelected()) {
+                if (toggleButton == toolsMap.get("fill_toggle_button")) canvasActiveNode.setFill(colorPicker.getValue());
+                else canvasActiveNode.setStroke(colorPicker.getValue());
+            } else {
+                if (toggleButton == toolsMap.get("stroke_toggle_button")) canvasActiveNode.setFill(null);
+                else canvasActiveNode.setStroke(colorPicker.getValue());
+            }
         }
 
-        public ArrayList<Node> getNodes(String key) {
-            nodeMap.computeIfAbsent(key, k -> new ArrayList<>(0));
+        public LinkedHashMap<String, Node> getNodes(String key) {
+            nodeMap.computeIfAbsent(key, k -> new LinkedHashMap<>(0));
             return nodeMap.get(key);
         }
 
+        /**
+         * Switching from one button to another involves clearing the currently shown controls
+         * of the options toolbar and filling it up with the controls specific to a newly selected
+         * tool.
+         *
+         * @param items lists the options controls that are specific to the newly selected toolbar button.
+         * @param newID id of the new button or tool selected.
+         */
         public void switchToolOptions(ObservableList<Node> items, String newID){
             DrawableButtonTool prevTool = config.getPrevSelectedTool();
-            if (prevTool != null)
-                items.removeAll(prevTool.getOptions().getNodes(prevTool.getId()));
-            items.addAll(getNodes(newID));
+            if (prevTool != null) {
+                LinkedHashMap<String, Node> prevToolOptions = prevTool.getOptions().getNodes(prevTool.getId());
+                for (Map.Entry<String, Node> prevToolOptionSet : prevToolOptions.entrySet()) {
+                    items.remove(prevToolOptions.get(prevToolOptionSet.getKey()));
+                }
+            }
+            LinkedHashMap<String, Node> newToolOptions = getNodes(newID);
+            for (Map.Entry<String, Node> newToolOptionSet : newToolOptions.entrySet()) {
+                items.add(newToolOptions.get(newToolOptionSet.getKey()));
+            }
+            config.setSelectedNode(null);
         }
     }
 }

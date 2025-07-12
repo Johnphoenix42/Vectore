@@ -1,13 +1,15 @@
 package appcustomcontrol;
 
+import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.InputEvent;
@@ -16,7 +18,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.*;
 import javafx.scene.text.Text;
 import javafx.util.StringConverter;
 
@@ -26,29 +29,60 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "rectangle_";
     TreeMap<String, LinkedHashMap<String, Node>> nodeTree = new TreeMap<>();
+    private final RectangleOptions optionButtonsBuilder;
     private Rectangle activeRectangle = null;
     private boolean isDrawing = false;
     private double mouseStartPointX = 0, mouseStartPointY = 0;
     private int shapeCounter = 0;
+    private int breakPointCounter = 0;
 
     public RectangleButtonTool(GlobalDrawPaneConfig config) {
         super("Rect", config);
         optionButtonsBuilder = new RectangleOptions(config);
-        nodeTree.put("primary", new LinkedHashMap<>());
-        nodeTree.put("secondary", new LinkedHashMap<>());
+        nodeTree.put(PRIMARY, new LinkedHashMap<>());
+        nodeTree.put(SECONDARY, new LinkedHashMap<>());
     }
 
     @Override
     public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> draw(EventType<T> eventType, T ev) {
         TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
-        renderTree.put("primary", new LinkedHashMap<>());
-        renderTree.put("secondary", new LinkedHashMap<>());
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
         if (eventType == MouseEvent.MOUSE_PRESSED) {
             drawOnMousePressed((MouseEvent) ev, renderTree);
         } else if (eventType == MouseEvent.MOUSE_MOVED){
             drawOnMouseMoved((MouseEvent) ev, renderTree);
+        } else if (eventType == MouseEvent.MOUSE_DRAGGED){
+            drawOnMouseDragged((MouseEvent) ev, renderTree);
         }
         return renderTree;
+    }
+
+    @Override
+    public <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
+        if (eventType == MouseEvent.MOUSE_PRESSED) {
+            TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+            renderTree.put(PRIMARY, new LinkedHashMap<>());
+            renderTree.put(SECONDARY, new LinkedHashMap<>());
+            LinkedHashMap<String, Node> breakPointsMap = nodeTree.get(SECONDARY);
+
+            //!isDrawing at this point means rectangle is not drawing.
+            if (!isDrawing) {
+
+                /*
+                This next block checks if a new Path has been created and the last path's control points
+                remain active. If they are, it clears them all except for the first control point
+                 */
+                if (breakPointsMap.containsKey("point_" + (shapeCounter - 1) + "_0")) {
+                    Node newestNodeBreakPoint = breakPointsMap.remove("point_" + shapeCounter + "_0");
+                    renderTree.get(SECONDARY).putAll(breakPointsMap);
+                    breakPointsMap.clear();
+                    breakPointsMap.put("point_" + shapeCounter + "_0", newestNodeBreakPoint);
+                }
+            }
+            return renderTree;
+        }
+        return null;
     }
 
     private void drawOnMousePressed(MouseEvent ev, TreeMap<String, LinkedHashMap<String, Node>> renderTree){
@@ -56,27 +90,84 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             mouseStartPointX = ev.getX();
             mouseStartPointY = ev.getY();
             Rectangle rectangle = new Rectangle(0, 0);
-            rectangle.setFill(null);
+            LinkedHashMap<String, Node> staticGlobalOptions = optionButtonsBuilder.getNodes(OptionButtonsBuilder.GLOBAL_NODE_OPTIONS);
+            boolean shouldFill = ((ToggleButton) staticGlobalOptions.get("fill_toggle_button")).isSelected();
+            rectangle.setFill(shouldFill ? config.getForegroundColor() : null);
             rectangle.setTranslateX(mouseStartPointX);
             rectangle.setTranslateY(mouseStartPointY);
-            //rectangle.setFill(config.getForegroundColor());
             rectangle.setStrokeWidth(config.getStrokeWidth());
-            rectangle.setStroke(super.config.getForegroundColor());
+            boolean shouldStroke = ((ToggleButton) staticGlobalOptions.get("stroke_toggle_button")).isSelected();
+            rectangle.setStroke(shouldStroke ? super.config.getForegroundColor() : null);
             activeRectangle = rectangle;
 
-            LinkedHashMap<String, Node> nodeMap = nodeTree.get("primary");
+            LinkedHashMap<String, Node> nodeMap = nodeTree.get(PRIMARY);
             nodeMap.put(SHAPE_NAMESPACE + shapeCounter, rectangle);
-            renderTree.get("primary").put(SHAPE_NAMESPACE + shapeCounter, rectangle);
+            renderTree.get(PRIMARY).put(SHAPE_NAMESPACE + shapeCounter, rectangle);
             shapeCounter++;
+            breakPointCounter = 0;
             isDrawing = true;
             config.setSelectedNode(activeRectangle);
+
+            Circle topLeftAnchor = createBreakPoint(ev.getX(), ev.getY(), renderTree);
+            nodeTree.get(SECONDARY).putIfAbsent(topLeftAnchor.getId(), topLeftAnchor);
+            renderTree.get(SECONDARY).putIfAbsent(topLeftAnchor.getId(), topLeftAnchor);
+            nodeTree.get(SECONDARY).replace(topLeftAnchor.getId(), topLeftAnchor);
+            renderTree.get(SECONDARY).replace(topLeftAnchor.getId(), topLeftAnchor);
         }else {
             activeRectangle.setTranslateX(Math.min(mouseStartPointX, ev.getX()));
             activeRectangle.setTranslateY(Math.min(mouseStartPointY, ev.getY()));
             activeRectangle.setWidth(Math.abs(mouseStartPointX - ev.getX()));
             activeRectangle.setHeight(Math.abs(mouseStartPointY - ev.getY()));
+            Circle bottomRightAnchor = createBreakPoint(ev.getX(), ev.getY(), renderTree);
             isDrawing = false;
+            nodeTree.get(SECONDARY).putIfAbsent(bottomRightAnchor.getId(), bottomRightAnchor);
+            renderTree.get(SECONDARY).putIfAbsent(bottomRightAnchor.getId(), bottomRightAnchor);
+            nodeTree.get(SECONDARY).replace(bottomRightAnchor.getId(), bottomRightAnchor);
+            renderTree.get(SECONDARY).replace(bottomRightAnchor.getId(), bottomRightAnchor);
         }
+
+    }
+
+    /**
+     * Create a path breakpoint node, i.e. a circle-represented point that received a click event,
+     * and set it's onMousePressed event. Each breakpoint circle is also given an
+     * id consisting of the  shapeCounter (how many paths this path tool has drawn),
+     * and breakpointCounter variable, the latter of which is the zero-based index
+     * of breakpoints drawn since the path started. The breakpoints id are in this format:
+     * "point_0_0".
+     * @param x the x pos to draw the breakpoint node.
+     * @param y the y pos to draw the breakpoint node.
+     * @param renderTree this node tree this tool gives draw pane to render.
+     * @return the circle object which is the breakpoint node.
+     */
+    private Circle createBreakPoint(double x, double y, Map<String, LinkedHashMap<String, Node>> renderTree) {
+        Circle breakPoint = new Circle(x, y, config.getStrokeWidth()+4);
+        breakPoint.setFill(Color.TRANSPARENT);
+        breakPoint.setStroke(Color.GRAY);
+        breakPoint.setId("point_" + shapeCounter + "_" + breakPointCounter);
+        breakPointCounter++;
+        breakPoint.setOnMousePressed(MouseEvent::consume);
+        breakPoint.setOnMouseDragged(event -> {
+            if(isDrawing){
+                AppLogger.log(getClass(), 282, "drag not executing");
+                return;
+            }
+            double eventX = event.getX();
+            double eventY = event.getY();
+            if (breakPointCounter == 1) {
+                breakPoint.setCenterX(eventX);
+                breakPoint.setCenterY(eventY);
+                activeRectangle.setWidth(eventX);
+                activeRectangle.setHeight(eventY);
+            } else {
+                activeRectangle.setArcWidth(event.getX() - mouseStartPointX);
+                activeRectangle.setArcHeight(event.getY() - mouseStartPointY);
+            }
+        });
+        breakPoint.setOnMouseEntered(event -> {
+            breakPoint.setCursor(Cursor.CROSSHAIR);
+        });
+        return breakPoint;
     }
 
     private void drawOnMouseMoved(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
@@ -85,15 +176,23 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
         activeRectangle.setTranslateY(Math.min(mouseStartPointY, event.getY()));
         activeRectangle.setWidth(Math.abs(mouseStartPointX - event.getX()));
         activeRectangle.setHeight(Math.abs(mouseStartPointY - event.getY()));
+
+        Node widthSpinner = getOptions().getWidthSpinner();
+        ((Spinner<Double>) widthSpinner).getValueFactory().setValue(activeRectangle.getWidth());
+        Node heightSpinner = getOptions().getHeightSpinner();
+        ((Spinner<Double>) heightSpinner).getValueFactory().setValue(activeRectangle.getHeight());
+    }
+
+    private void drawOnMouseDragged(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
+        if (!isDrawing) return;
+        activeRectangle.setTranslateX(Math.min(mouseStartPointX, event.getX()));
+        activeRectangle.setTranslateY(Math.min(mouseStartPointY, event.getY()));
+        activeRectangle.setWidth(Math.abs(mouseStartPointX - event.getX()));
+        activeRectangle.setHeight(Math.abs(mouseStartPointY - event.getY()));
     }
 
     @Override
-    public <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
-        return null;
-    }
-
-    @Override
-    public DrawableButtonTool.OptionButtonsBuilder getOptions() {
+    public RectangleOptions getOptions() {
         return optionButtonsBuilder;
     }
 
@@ -104,8 +203,6 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
 
     public final class RectangleOptions extends OptionButtonsBuilder{
 
-        ToggleButton fillToggleButton;
-
         private RectangleOptions(GlobalDrawPaneConfig config){
             super(config);
             double fieldWidth = 20;
@@ -115,32 +212,11 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
 
             Separator separator = new Separator(Orientation.VERTICAL);
 
-            fillToggleButton = new ToggleButton("fill");
-            fillToggleButton.setOnAction(event -> {
-                if (activeRectangle == null) return;
-                if (fillToggleButton.isSelected()){
-                    activeRectangle.setFill(config.getForegroundColor());
-                }else{
-                    activeRectangle.setFill(null);
-                }
-            });
-            ToggleButton strokeToggleButton = new ToggleButton("Stroke");
-            strokeToggleButton.setOnAction(event -> {
-                if (activeRectangle == null) return;
-                if (strokeToggleButton.isSelected()){
-                    activeRectangle.setStroke(config.getForegroundColor());
-                }else{
-                    activeRectangle.setStroke(null);
-                }
-            });
-
-            ArrayList<Node> nodeList = nodeMap.getOrDefault(getId(), new ArrayList<>());
-            nodeList.add(widthBox);
-            nodeList.add(heightBox);
-            nodeList.add(rotationBox);
-            nodeList.add(separator);
-            nodeList.add(fillToggleButton);
-            nodeList.add(strokeToggleButton);
+            LinkedHashMap<String, Node> nodeList = nodeMap.getOrDefault(getId(), new LinkedHashMap<>());
+            nodeList.put("width_box", widthBox);
+            nodeList.put("height_box", heightBox);
+            nodeList.put("rotation_box", rotationBox);
+            nodeList.put("separator_1", separator);
             nodeMap.put(getId(), nodeList);
         }
 
@@ -160,12 +236,11 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             Spinner<Double> numberSpinner = new Spinner<>(-500, 500, 10, 1);
             HBox box = createFieldToolEntry(numberSpinner, "width", fieldWidth);
             EventHandler<KeyEvent> keyHandler = event -> {
-                if(nodeTree.get("primary").isEmpty()) return;
+                if(nodeTree.get(PRIMARY).isEmpty()) return;
 
                 String value = sanitizeTextField(numberSpinner, event);
                 try {
                     activeRectangle.setWidth(Double.parseDouble(value));
-                    activeRectangle.setFill(null);
                 } catch (NumberFormatException ex) {
                     activeRectangle.setWidth(activeRectangle.getWidth());
                 }
@@ -182,7 +257,7 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             Spinner<Double> numberSpinner = new Spinner<>(-500, 500, 10, 1);
             HBox box = createFieldToolEntry(numberSpinner, "height", fieldWidth);
             EventHandler<KeyEvent> keyHandler = event -> {
-                if(nodeTree.get("primary").isEmpty()) return;
+                if(nodeTree.get(PRIMARY).isEmpty()) return;
 
                 String value = sanitizeTextField(numberSpinner, event);
                 try {
@@ -203,7 +278,7 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             Spinner<Double> numberSpinner = new Spinner<>(-500, 500, 10);
             HBox box = createFieldToolEntry(numberSpinner, "rotate", fieldWidth);
             EventHandler<KeyEvent> keyHandler = event -> {
-                if(nodeTree.get("primary").isEmpty()) return;
+                if(nodeTree.get(PRIMARY).isEmpty()) return;
 
                 String value = sanitizeTextField(numberSpinner, event);
                 try {
@@ -233,25 +308,20 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
         }
 
         @Override
-        protected void setColorPickerOnAction(ColorPicker colorPicker, ToggleButton toggleButton) {
-            super.setColorPickerOnAction(colorPicker, toggleButton);
-            System.out.println("Rectangle");
-            //if (activeRectangle == null) return;
-            if (toggleButton.isSelected()) {
-                activeRectangle.setFill(colorPicker.getValue());
-            } else {
-                activeRectangle.setFill(null);
-            }
-        }
-
-        @Override
         public void switchToolOptions(ObservableList<Node> items, String newID) {
             super.switchToolOptions(items, newID);
-            config.setSelectedNode(null);
+        }
+
+        Node getWidthSpinner () {
+            return (((HBox) getOptions().getNodes(getId()).get("width_box")).getChildren().get(1));
+        }
+
+        Node getHeightSpinner () {
+            return (((HBox) getOptions().getNodes(getId()).get("height_box")).getChildren().get(1));
         }
     }
 
-    private class DoubleSpinnerValueFactory extends SpinnerValueFactory<Double> {
+    private static class DoubleSpinnerValueFactory extends SpinnerValueFactory<Double> {
         private final Spinner<Double> numberSpinner;
         private final InDecrementListener<Double> inDecrementListener;
 
@@ -271,8 +341,7 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             Double oldValue = valueFactory.getValue();
             valueFactory.setValue((oldValue != null ? oldValue : 0) - steps);
 
-            if (activeRectangle == null) return;
-            activeRectangle.setRotate(valueFactory.getValue());
+            inDecrementListener.onInDecrement(valueFactory);
         }
 
         @Override

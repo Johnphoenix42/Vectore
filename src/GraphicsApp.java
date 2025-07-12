@@ -19,6 +19,8 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /**
+ * While every effort is made to accurately reflect the behavior of the program, FFmpeg is under continuous development and the code may have changed since the time of this writing.
+ *
  * Todo: Change the stroke toggle button to a Spinner that define the stroke-width with 0 as min and 10 as max.
  *      When the color is set a dialog or popup should appear with at least 3 options to choose which property - fill, stroke or none, the
  *      color change is for or should affect.
