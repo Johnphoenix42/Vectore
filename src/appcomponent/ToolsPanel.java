@@ -5,11 +5,19 @@ import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ToolsPanel extends ToolBar {
 
@@ -48,7 +56,7 @@ public class ToolsPanel extends ToolBar {
         PathButtonTool pathButton = new PathButtonTool(config) {
             @Override
             public void setCurrentToolbarOptions(DrawableButtonTool tool) {
-                //optionButtonsBuilder = tool.getOptions();
+                optionButtonsBuilder = tool.getOptions();
                 optionButtonsBuilder.switchToolOptions(items, getId());
             }
         };
@@ -64,18 +72,31 @@ public class ToolsPanel extends ToolBar {
         setInitialSelectedTool(rectangleButton, items);
 
         getItems().addAll(rectangleButton, circleButton, pathButton, textButton);
-
-        //AppLogger.log(getClass(), 61, config.getCurrentTool().getClass().getName());
     }
 
     /**
-     * Sets the currently selected toolbar button.
-     * @param button
-     * @param items
+     * Sets the initially selected toolbar button. This is the button that is automatically selected
+     * as the app loads.
+     * @param button the button to set as the first selected tool
+     * @param items contains the controls specific to this tool button that will fill up the sub-tool option bar when selected.
      */
     private void setInitialSelectedTool(DrawableButtonTool button, ObservableList<Node> items) {
         optionButtonsBuilder = button.getOptions();
-        items.addAll(optionButtonsBuilder.getNodes("static"));
+        VBox vBox = new VBox(3);
+        vBox.setAlignment(Pos.CENTER);
+        HBox hBox = new HBox(3);
+        ArrayList<Node> temp = new ArrayList<>();
+        LinkedHashMap<String, Node> globalOptionNodes = optionButtonsBuilder.getNodes(DrawableButtonTool.OptionButtonsBuilder.GLOBAL_NODE_OPTIONS);
+        for (Map.Entry<String, Node> globalToolOption : globalOptionNodes.entrySet()) {
+            if (globalToolOption.getKey().equals("color_picker")) vBox.getChildren().add(globalOptionNodes.get(globalToolOption.getKey()));
+            else if ("fill_toggle_button stroke_toggle_button".contains(globalToolOption.getKey())) {
+                hBox.getChildren().add(globalOptionNodes.get(globalToolOption.getKey()));
+            }
+            else temp.add(globalOptionNodes.get(globalToolOption.getKey()));
+        }
+        vBox.getChildren().add(hBox);
+        items.add((vBox));
+        items.addAll(temp);
         button.setAsCurrentlySelectedTool();
         optionButtonsBuilder.switchToolOptions(items, button.getId());
     }

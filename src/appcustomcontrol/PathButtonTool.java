@@ -4,7 +4,6 @@ import appcomponent.DrawPane;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventType;
 import javafx.geometry.Point2D;
@@ -24,8 +23,6 @@ import java.util.*;
 public abstract class PathButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "path_";
-    private static final String SECONDARY = "secondary";
-    private static final String PRIMARY = "primary";
 
     // PathButtonTool's own very nodeTree. It's "primary" childNode contains every path appcomponent.DrawPane still has, i.e. not deleted.
     TreeMap<String, LinkedHashMap<String, Node>> nodeTree;
@@ -34,6 +31,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
     TreeMap<String, LinkedHashMap<String, Node>> globalRenderTree;
 
     ArrayList<Node> pathElementControls; //Exists to maintain reference to control_0 and control_1.
+    private final PathOptions optionButtonsBuilder;
     private Path activePath = null;
     private int shapeCounter = 0;
     private int breakPointCounter = 0;
@@ -147,7 +145,11 @@ public abstract class PathButtonTool extends DrawableButtonTool {
             pathShape.setTranslateY(0);
             ObservableList<PathElement> pathElements = pathShape.getElements();
             pathElements.add(new MoveTo(x, y));
-            pathShape.setStroke(config.getForegroundColor());
+            LinkedHashMap<String, Node> staticGlobalOptions = optionButtonsBuilder.getNodes(OptionButtonsBuilder.GLOBAL_NODE_OPTIONS);
+            boolean shouldFill = ((ToggleButton) staticGlobalOptions.get("fill_toggle_button")).isSelected();
+            pathShape.setFill(shouldFill ? config.getForegroundColor() : null);
+            boolean shouldStroke = ((ToggleButton) staticGlobalOptions.get("stroke_toggle_button")).isSelected();
+            pathShape.setStroke(shouldStroke ? config.getForegroundColor(): null);
             pathShape.setStrokeWidth(config.getStrokeWidth());
             activePath = pathShape;
             nodeMap.put(SHAPE_NAMESPACE + shapeCounter, pathShape);
@@ -158,9 +160,10 @@ public abstract class PathButtonTool extends DrawableButtonTool {
             shapeCounter++;
             breakPointCounter = 0;
             config.setSelectedNode(pathShape);
-            /*pathShape.setOnMouseClicked(event -> {
-                activePath = pathShape;
-            });*/
+            pathShape.setOnMouseClicked(event -> {
+                config.setActionMode(DrawPane.CanvasActionMode.SELECT_MODE);
+                //activePath = pathShape;
+            });
         }else {
             Path pathShape = activePath;
             ObservableList<PathElement> pathElements = pathShape.getElements();
@@ -171,6 +174,8 @@ public abstract class PathButtonTool extends DrawableButtonTool {
             if (anchorPathElement instanceof MoveTo) {
                 MoveTo moveTo = (MoveTo) anchorPathElement;
                 if (inRange(new Point2D(moveTo.getX(), moveTo.getY()), new Point2D(x, y))){
+                    // code here simply checks if the mouse press occurs inside the break point circle of the first Move to.
+                    // in other words, it ends the drawing of a path;
                     skipDrawBreakpoint = true;
                 }
             }
@@ -456,20 +461,17 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         return controlPoint;
     }
 
-    public class PathOptions extends OptionButtonsBuilder{
-
-        ToggleButton fillToggleButton;
+    public final class PathOptions extends OptionButtonsBuilder{
 
         private PathOptions(GlobalDrawPaneConfig config){
             super(config);
-            colorPicker.setPrefSize(60, 40);
             config.setForegroundColor(config.getForegroundColor());
             config.setStrokeWidth(config.getStrokeWidth());
-            ArrayList<Node> optionNodes = createOptions();
+            LinkedHashMap<String, Node> optionNodes = createOptions();
             nodeMap.put(getId(), optionNodes);
         }
 
-        private ArrayList<Node> createOptions(){
+        private LinkedHashMap<String, Node> createOptions(){
             ComboBox<String> curveType = new ComboBox<>();
             curveType.getStyleClass().add("button");
             curveType.getItems().addAll("Arc", "Quadratic", "Cubic");
@@ -480,16 +482,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
                 config.setCurveType(selectedItem);
             });
 
-            fillToggleButton = new ToggleButton("fill");
-            fillToggleButton.setOnAction(event -> {
-                if (activePath == null) return;
-                if (fillToggleButton.isSelected()){
-                    activePath.setFill(config.getForegroundColor());
-                }else{
-                    activePath.setFill(null);
-                }
-            });
-            ToggleButton strokeToggleButton = new ToggleButton("Stroke");
+            /*ToggleButton strokeToggleButton = new ToggleButton("Stroke");
             strokeToggleButton.setOnAction(event -> {
                 if (activePath == null) return;
                 if (strokeToggleButton.isSelected()){
@@ -497,44 +490,20 @@ public abstract class PathButtonTool extends DrawableButtonTool {
                 }else{
                     activePath.setStroke(null);
                 }
-            });
+            });*/
             // ToggleGroup toggleGroup = new ToggleGroup();
 
             // fillToggleButton.setToggleGroup(toggleGroup);
 
-            ArrayList<Node> nodeList = nodeMap.getOrDefault(getId(), new ArrayList<>());
-            nodeList.add(curveType);
-            nodeList.add(fillToggleButton);
-            nodeList.add(strokeToggleButton);
+            LinkedHashMap<String, Node> nodeList = nodeMap.getOrDefault(getId(), new LinkedHashMap<>());
+            nodeList.put("curve_type", curveType);
+            //nodeList.put("stroke_toggle_button", strokeToggleButton);
             return nodeList;
-        }
-
-        /**
-         * Applies selected color from a ColorPicker to a shape, using ToggleButton as a switch.
-         * If no canvas shape is selected, nothing happens.
-         * @param colorPicker control used to select a color.
-         * @param toggleButton control that will be used as the switch. When the toggle button is on, color is
-         *                     added. When off, color is removed, i.e. shape is hollow, not filled with TRANSPARENT
-         */
-        @Override
-        protected void setColorPickerOnAction(ColorPicker colorPicker, ToggleButton toggleButton) {
-            super.setColorPickerOnAction(colorPicker, toggleButton);
-            Shape canvasActiveNode = (Shape) config.getSelectedNode();
-            if (canvasActiveNode == null) return;
-            if (toggleButton.isSelected()) {
-                canvasActiveNode.setFill(colorPicker.getValue());
-            } else {
-                canvasActiveNode.setFill(null);
-            }
         }
 
         @Override
         public void switchToolOptions(ObservableList<Node> items, String newID) {
             super.switchToolOptions(items, newID);
-            config.setSelectedNode(null);
-            colorPicker.setOnAction(event -> {
-                this.setColorPickerOnAction(colorPicker, fillToggleButton);
-            });
         }
     }
 }

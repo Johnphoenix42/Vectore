@@ -1,5 +1,6 @@
 package appcomponent;
 
+import appcustomcontrol.DrawableButtonTool;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
 import javafx.event.EventType;
@@ -46,8 +47,8 @@ public class DrawPane extends StackPane {
     private <T extends InputEvent> void renderNodes(Pane canvasPane, EventType<T> type, T event){
         Map<String, LinkedHashMap<String, Node>> nodeTree = drawAreaConfig.getCurrentTool().draw(type, event);
         if(nodeTree != null) {
-            LinkedHashMap<String, Node> primaryNodes = nodeTree.get("primary");
-            LinkedHashMap<String, Node> secondaryNodes = nodeTree.get("secondary");
+            LinkedHashMap<String, Node> primaryNodes = nodeTree.get(DrawableButtonTool.PRIMARY);
+            LinkedHashMap<String, Node> secondaryNodes = nodeTree.get(DrawableButtonTool.SECONDARY);
 
             if(primaryNodes != null) {
                 for (Map.Entry<String, Node> nodeToAdd : primaryNodes.entrySet()) {
@@ -60,7 +61,6 @@ public class DrawPane extends StackPane {
             for (Map.Entry<String, Node> nodeToAdd : secondaryNodes.entrySet()) {
                 if (nodeToAdd == null || nodeToAdd.getValue() == null) continue;
                 //nodeToAdd.getValue().setClip(clipRect);
-                System.out.println(nodeToAdd.getKey());
                 canvasPane.getChildren().add(nodeToAdd.getValue());
             }
         }
@@ -68,11 +68,11 @@ public class DrawPane extends StackPane {
 
     private <T extends InputEvent> void unRenderNodes(Pane canvasPane, EventType<T> type, T event){
         Map<String, LinkedHashMap<String, Node>> unDrawNodeTree = drawAreaConfig.getCurrentTool().unDraw(type, event);
-        if(unDrawNodeTree != null) {
-            LinkedHashMap<String, Node> unDrawPrimaryNodes = unDrawNodeTree.get("primary");
-            LinkedHashMap<String, Node> unDrawSecondaryNodes = unDrawNodeTree.get("secondary");
+        if (unDrawNodeTree != null) {
+            LinkedHashMap<String, Node> unDrawPrimaryNodes = unDrawNodeTree.get(DrawableButtonTool.PRIMARY);
+            LinkedHashMap<String, Node> unDrawSecondaryNodes = unDrawNodeTree.get(DrawableButtonTool.SECONDARY);
 
-            if(unDrawPrimaryNodes != null) {
+            if (unDrawPrimaryNodes != null) {
                 for (Map.Entry<String, Node> nodeToRemove : unDrawPrimaryNodes.entrySet()) {
                     if (nodeToRemove == null) continue;
                     canvasPane.getChildren().remove(nodeToRemove.getValue());
@@ -146,6 +146,10 @@ public class DrawPane extends StackPane {
 
     public Node getActiveCanvasNode(){
         return activeCanvasNode;
+    }
+
+    public enum CanvasActionMode {
+        DRAW_MODE, SELECT_MODE
     }
 
 }
