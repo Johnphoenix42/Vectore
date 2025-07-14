@@ -19,7 +19,7 @@ import java.util.Map;
 public class DrawPane extends StackPane {
 
     private final GlobalDrawPaneConfig drawAreaConfig;
-    private static Pane canvasPane;
+    private static Pane activeCanvasPane;
     private Node activeCanvasNode = null;
 
     public DrawPane(GlobalDrawPaneConfig config, double width, double height){
@@ -40,7 +40,7 @@ public class DrawPane extends StackPane {
         canvasPane.setEffect(new DropShadow(6, Color.BLACK));
 
         canvasPane.setClip(new Rectangle(width, height));
-        DrawPane.canvasPane = canvasPane;
+        DrawPane.activeCanvasPane = canvasPane;
         return canvasPane;
     }
 
@@ -90,7 +90,7 @@ public class DrawPane extends StackPane {
     node up to the tree root while EventFilter executes from the root down to the child. By using
     EventHandler, I am able to consume certain events before they bubble up to the root, e.g. when the
     path controls (the smaller, black-filled ones) are clicked on, the event doesn't need to get to the
-    appcomponent.DrawPane's click event. This in my current opinion is more efficient than using booleans to maintain
+    DrawPane's click event. This in my current opinion is more efficient than using booleans to maintain
     states.
      */
     public void addEventListeners(Pane canvasPane){
@@ -112,14 +112,30 @@ public class DrawPane extends StackPane {
         });
     }
 
+    public static void removeSecondaryNodeFromShapes(Map<String, LinkedHashMap<String, Node>> unDrawNodeTree) {
+        LinkedHashMap<String, Node> unDrawPrimaryNodes = unDrawNodeTree.get(DrawableButtonTool.PRIMARY);
+        LinkedHashMap<String, Node> unDrawSecondaryNodes = unDrawNodeTree.get(DrawableButtonTool.SECONDARY);
+
+        if (unDrawPrimaryNodes != null) {
+            for (Map.Entry<String, Node> nodeToRemove : unDrawPrimaryNodes.entrySet()) {
+                if (nodeToRemove == null) continue;
+                activeCanvasPane.getChildren().remove(nodeToRemove.getValue());
+            }
+        }
+        if(unDrawSecondaryNodes == null) return;
+        for (Map.Entry<String, Node> nodeToRemove : unDrawSecondaryNodes.entrySet()) {
+            if (nodeToRemove != null && nodeToRemove.getValue() != null) activeCanvasPane.getChildren().remove(nodeToRemove.getValue());
+        }
+    }
+
     /*
     Generates svg code with canvasPane as the root, i.e., the svg tag, the width and height
     of which is fed to viewBox attribute.
      */
     public String generateSVGHTML(){
-        ObservableList<Node> nodeContents = canvasPane.getChildren();
-        double width = canvasPane.getBoundsInLocal().getWidth();
-        double height = canvasPane.getBoundsInLocal().getHeight();
+        ObservableList<Node> nodeContents = activeCanvasPane.getChildren();
+        double width = activeCanvasPane.getBoundsInLocal().getWidth();
+        double height = activeCanvasPane.getBoundsInLocal().getHeight();
         StringBuilder svgString = new StringBuilder("<svg viewBox=\"0 0 " + width + " " + height + "\">");
         for (Node nodeContent : nodeContents) {
             String tagName = nodeContent.getClass().getSimpleName().toLowerCase();
@@ -137,7 +153,7 @@ public class DrawPane extends StackPane {
     }
 
     public static Pane getPane() {
-        return canvasPane;
+        return activeCanvasPane;
     }
 
     public void setActiveCanvasNode (Node activeNode) {

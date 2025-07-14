@@ -24,9 +24,6 @@ public abstract class PathButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "path_";
 
-    // PathButtonTool's own very nodeTree. It's "primary" childNode contains every path appcomponent.DrawPane still has, i.e. not deleted.
-    TreeMap<String, LinkedHashMap<String, Node>> nodeTree;
-
     // A global reference of renderTree so it does not get garbage-collected;
     TreeMap<String, LinkedHashMap<String, Node>> globalRenderTree;
 
@@ -92,7 +89,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
             TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
             renderTree.put(PRIMARY, new LinkedHashMap<>());
             renderTree.put(SECONDARY, new LinkedHashMap<>());
-            LinkedHashMap<String, Node> breakPointsMap = nodeTree.get(SECONDARY);
+            LinkedHashMap<String, Node> anchorsMap = nodeTree.get(SECONDARY);
 
             //isPathDrawing at this point means path is not drawing or not.
             if (isPathDrawing && isPathOpenReady) {
@@ -101,11 +98,11 @@ public abstract class PathButtonTool extends DrawableButtonTool {
                 This next block checks if a new Path has been created and the last path's control points
                 remain active. If they are, it clears them all except for the first control point
                  */
-                if (breakPointsMap.containsKey("point_" + (shapeCounter - 1) + "_0")) {
-                    Node newestNodeBreakPoint = breakPointsMap.remove("point_" + shapeCounter + "_0");
-                    renderTree.get(SECONDARY).putAll(breakPointsMap);
-                    breakPointsMap.clear();
-                    breakPointsMap.put("point_" + shapeCounter + "_0", newestNodeBreakPoint);
+                if (anchorsMap.containsKey("point_" + (shapeCounter - 1) + "_0")) {
+                    Node newestNodeBreakPoint = anchorsMap.remove("point_" + shapeCounter + "_0");
+                    renderTree.get(SECONDARY).putAll(anchorsMap);
+                    anchorsMap.clear();
+                    anchorsMap.put("point_" + shapeCounter + "_0", newestNodeBreakPoint);
                 }
             }
             if (!isPathDrawing && isPathOpenReady) {
@@ -126,6 +123,15 @@ public abstract class PathButtonTool extends DrawableButtonTool {
     @Override
     public void addClickListener(DrawableButtonTool prevSelectedButton) {
         super.addClickListener(prevSelectedButton);
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
+        LinkedHashMap<String, Node> breakPointsMap = prevSelectedButton.nodeTree.get(SECONDARY);
+
+        renderTree.get(SECONDARY).putAll(breakPointsMap);
+        breakPointsMap.clear();
+        DrawPane.removeSecondaryNodeFromShapes(renderTree);
+        config.setSelectedNode(null);
     }
 
     private void drawOnMousePressed(MouseEvent ev, TreeMap<String, LinkedHashMap<String, Node>> renderTree){
@@ -184,7 +190,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         mousePointX = x;
         mousePointY = y;
 
-        Circle circle = createBreakPoint(x, y, renderTree);
+        Circle circle = createAnchorPoint(x, y, renderTree);
         if (skipDrawBreakpoint) {
             return;
         }
@@ -211,7 +217,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
      * @param renderTree this node tree this tool gives draw pane to render.
      * @return the circle object which is the breakpoint node.
      */
-    private Circle createBreakPoint(double x, double y, Map<String, LinkedHashMap<String, Node>> renderTree) {
+    private Circle createAnchorPoint(double x, double y, Map<String, LinkedHashMap<String, Node>> renderTree) {
         Circle breakPoint = new Circle(x, y, config.getStrokeWidth()+4);
         breakPoint.setFill(Color.TRANSPARENT);
         breakPoint.setStroke(Color.GRAY);
