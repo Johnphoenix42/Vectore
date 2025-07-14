@@ -3,14 +3,12 @@ import appcomponent.DrawPane;
 import appcomponent.SubToolsPanel;
 import appcomponent.ToolsPanel;
 import apputil.GlobalDrawPaneConfig;
-import apputil.NewProjectModelConsumer;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.Spinner;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -19,8 +17,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /**
- * While every effort is made to accurately reflect the behavior of the program, FFmpeg is under continuous development and the code may have changed since the time of this writing.
- *
+ * While every effort is made to accurately reflect the behavior of the program, Vectore is under continuous development and the code may have changed since the time of this writing.
  * Todo: Change the stroke toggle button to a Spinner that define the stroke-width with 0 as min and 10 as max.
  *      When the color is set a dialog or popup should appear with at least 3 options to choose which property - fill, stroke or none, the
  *      color change is for or should affect.
@@ -59,9 +56,7 @@ public class GraphicsApp extends Application {
 
         Button generateSvg = new Button("Generate SVG");
         Text text = new Text();
-        generateSvg.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            text.setText(drawingArea.generateSVGHTML());
-        });
+        generateSvg.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> text.setText(drawingArea.generateSVGHTML()));
         VBox rightSidePanel = new VBox(generateSvg, text);
         rightSidePanel.setPrefWidth(180);
         rightSidePanel.setMaxWidth(240);
@@ -83,7 +78,7 @@ public class GraphicsApp extends Application {
         primaryStage.show();
     }
 
-    public static void main(String[] args) throws NoSuchMethodException {
+    public static void main(String[] args) {
         launch(args);
     }
 

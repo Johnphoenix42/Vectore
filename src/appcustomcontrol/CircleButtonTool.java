@@ -1,10 +1,13 @@
 package appcustomcontrol;
 
+import appcomponent.DrawPane;
+import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
@@ -16,21 +19,23 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.util.StringConverter;
 
+import javax.vecmath.Vector2d;
 import java.util.*;
 
 public abstract class CircleButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "circle_";
-    TreeMap<String, LinkedHashMap<String, Node>> nodeTree = new TreeMap<>();
     CircleOptions optionButtonsBuilder;
     private Circle activeCircle = null;
     private boolean isDrawing = false;
     private double mouseStartPointX = 0, mouseStartPointY = 0;
     private int shapeCounter = 0;
+    private int anchorCounter = 0;
 
     public CircleButtonTool(GlobalDrawPaneConfig config) {
         super("Circle", config);
@@ -80,6 +85,56 @@ public abstract class CircleButtonTool extends DrawableButtonTool {
             activeCircle.setRadius(radius);
             isDrawing = false;
         }
+        Circle topLeftAnchor = createAnchorPoint(ev.getX(), ev.getY(), renderTree);
+        nodeTree.get(SECONDARY).putIfAbsent(topLeftAnchor.getId(), topLeftAnchor);
+        renderTree.get(SECONDARY).putIfAbsent(topLeftAnchor.getId(), topLeftAnchor);
+        nodeTree.get(SECONDARY).replace(topLeftAnchor.getId(), topLeftAnchor);
+        renderTree.get(SECONDARY).replace(topLeftAnchor.getId(), topLeftAnchor);
+    }
+
+    /**
+     * Create a path anchor node, i.e. a circle-represented point that received a click event,
+     * and set it's onMousePressed event. Each anchor circle is also given an
+     * id consisting of the  shapeCounter (how many paths this path tool has drawn),
+     * and anchorCounter variable, the latter of which is the zero-based index
+     * of anchors drawn since the path started. The anchors id are in this format:
+     * "point_0_0".
+     * @param x the x pos to draw the anchor node.
+     * @param y the y pos to draw the anchor node.
+     * @param renderTree this node tree this tool gives draw pane to render.
+     * @return the circle object which is the anchor node.
+     */
+    private Circle createAnchorPoint(double x, double y, Map<String, LinkedHashMap<String, Node>> renderTree) {
+        Circle anchor = new Circle(x, y, config.getStrokeWidth()+4);
+        anchor.setFill(Color.TRANSPARENT);
+        anchor.setStroke(Color.GRAY);
+        anchor.setId("point_" + shapeCounter + "_" + anchorCounter);
+        anchorCounter++;
+        anchor.setOnMousePressed(MouseEvent::consume);
+        anchor.setOnMouseDragged(event -> {
+            if(isDrawing){
+                //if the rectangle is in drawing mode, you cannot drag its anchors.
+                AppLogger.log(getClass(), 282, "drag not executing");
+                return;
+            }
+            double eventX = event.getX();
+            double eventY = event.getY();
+            if (anchorCounter == 0) {
+                anchor.setCenterX(eventX);
+                anchor.setCenterY(eventY);
+                activeCircle.setTranslateX(Math.min(activeCircle.getTranslateX(), eventX));
+                activeCircle.setTranslateY(Math.min(activeCircle.getTranslateY(), eventY));
+            } else {
+                anchor.setCenterX(eventX);
+                anchor.setCenterY(eventY);
+                Vector2d radiusVector = new Vector2d();
+                radiusVector.set(activeCircle.getTranslateX() - eventX, activeCircle.getTranslateY() - eventY);
+                activeCircle.setRadius(radiusVector.length());
+            }
+            event.consume();
+        });
+        anchor.setOnMouseEntered(event -> anchor.setCursor(Cursor.CROSSHAIR));
+        return anchor;
     }
 
     private void drawOnMouseMoved(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
@@ -110,6 +165,15 @@ public abstract class CircleButtonTool extends DrawableButtonTool {
     @Override
     public void addClickListener(DrawableButtonTool prevSelectedButton) {
         super.addClickListener(prevSelectedButton);
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
+        LinkedHashMap<String, Node> anchorsMap = prevSelectedButton.nodeTree.get(SECONDARY);
+
+        renderTree.get(SECONDARY).putAll(anchorsMap);
+        anchorsMap.clear();
+        DrawPane.removeSecondaryNodeFromShapes(renderTree);
+        config.setSelectedNode(null);
     }
 
     public final class CircleOptions extends OptionButtonsBuilder{
@@ -215,16 +279,16 @@ public abstract class CircleButtonTool extends DrawableButtonTool {
             return textInput;
         }
 
-        Spinner<Double> getWidthSpinner () {
-            return (Spinner<Double>) (((HBox) getOptions().getNodes(getId()).get("x_coordinate_box")).getChildren().get(1));
+        Node getWidthSpinner () {
+            return ((HBox) getOptions().getNodes(getId()).get("x_coordinate_box")).getChildren().get(1);
         }
 
-        Spinner<Double> getHeightSpinner () {
-            return (Spinner<Double>) (((HBox) getOptions().getNodes(getId()).get("y_coordinate_box")).getChildren().get(1));
+        Node getHeightSpinner () {
+            return ((HBox) getOptions().getNodes(getId()).get("y_coordinate_box")).getChildren().get(1);
         }
 
-        Spinner<Double> getRadiusSpinner() {
-            return (Spinner<Double>) (((HBox) getOptions().getNodes(getId()).get("radius_box")).getChildren().get(1));
+        Node getRadiusSpinner() {
+            return ((HBox) getOptions().getNodes(getId()).get("radius_box")).getChildren().get(1);
         }
     }
 

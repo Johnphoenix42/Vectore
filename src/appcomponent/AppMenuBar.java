@@ -10,7 +10,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import java.util.*;
-import java.util.function.Consumer;
 
 public class AppMenuBar extends MenuBar {
 

@@ -1,5 +1,6 @@
 package appcustomcontrol;
 
+import appcomponent.DrawPane;
 import apputil.GlobalDrawPaneConfig;
 import javafx.event.EventType;
 import javafx.scene.Node;
@@ -17,7 +18,6 @@ public abstract class TextButtonTool extends DrawableButtonTool {
     public static final String SHAPE_NAMESPACE = "text_";
     private final TextAreaInterface textAreaInterface;
     private boolean textMouseEventFlag = false;
-    TreeMap<String, LinkedHashMap<String, Node>> nodeTree = new TreeMap<>();
     private Rectangle activeText = null;
     private boolean isDrawing = false;
     private double mouseStartPointX = 0, mouseStartPointY = 0;
@@ -80,6 +80,15 @@ public abstract class TextButtonTool extends DrawableButtonTool {
     @Override
     public void addClickListener(DrawableButtonTool prevSelectedButton) {
         super.addClickListener(prevSelectedButton);
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
+        LinkedHashMap<String, Node> anchorsMap = prevSelectedButton.nodeTree.get(SECONDARY);
+
+        renderTree.get(SECONDARY).putAll(anchorsMap);
+        anchorsMap.clear();
+        DrawPane.removeSecondaryNodeFromShapes(renderTree);
+        config.setSelectedNode(null);
     }
 
     private TextArea getTextArea() {

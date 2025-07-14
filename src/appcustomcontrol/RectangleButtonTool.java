@@ -1,5 +1,6 @@
 package appcustomcontrol;
 
+import appcomponent.DrawPane;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
@@ -7,7 +8,6 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -28,13 +28,12 @@ import java.util.*;
 public abstract class RectangleButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "rectangle_";
-    TreeMap<String, LinkedHashMap<String, Node>> nodeTree = new TreeMap<>();
     private final RectangleOptions optionButtonsBuilder;
     private Rectangle activeRectangle = null;
     private boolean isDrawing = false;
     private double mouseStartPointX = 0, mouseStartPointY = 0;
     private int shapeCounter = 0;
-    private int breakPointCounter = 0;
+    private int anchorCounter = 0;
 
     public RectangleButtonTool(GlobalDrawPaneConfig config) {
         super("Rect", config);
@@ -58,13 +57,15 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
         return renderTree;
     }
 
+
     @Override
     public <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
+        //Keep in mind that the draw method will run before this one. That means booleans can be weird here.
         if (eventType == MouseEvent.MOUSE_PRESSED) {
             TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
             renderTree.put(PRIMARY, new LinkedHashMap<>());
             renderTree.put(SECONDARY, new LinkedHashMap<>());
-            LinkedHashMap<String, Node> breakPointsMap = nodeTree.get(SECONDARY);
+            LinkedHashMap<String, Node> anchorsMap = nodeTree.get(SECONDARY);
 
             //!isDrawing at this point means rectangle is not drawing.
             if (!isDrawing) {
@@ -73,11 +74,11 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
                 This next block checks if a new Path has been created and the last path's control points
                 remain active. If they are, it clears them all except for the first control point
                  */
-                if (breakPointsMap.containsKey("point_" + (shapeCounter - 1) + "_0")) {
-                    Node newestNodeBreakPoint = breakPointsMap.remove("point_" + shapeCounter + "_0");
-                    renderTree.get(SECONDARY).putAll(breakPointsMap);
-                    breakPointsMap.clear();
-                    breakPointsMap.put("point_" + shapeCounter + "_0", newestNodeBreakPoint);
+                if (anchorsMap.containsKey("point_" + (shapeCounter - 1) + "_0")) {
+                    Node newestNodeanchor = anchorsMap.remove("point_" + shapeCounter + "_0");
+                    renderTree.get(SECONDARY).putAll(anchorsMap);
+                    anchorsMap.clear();
+                    anchorsMap.put("point_" + shapeCounter + "_0", newestNodeanchor);
                 }
             }
             return renderTree;
@@ -90,6 +91,7 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             mouseStartPointX = ev.getX();
             mouseStartPointY = ev.getY();
             Rectangle rectangle = new Rectangle(0, 0);
+            rectangle.setId(SHAPE_NAMESPACE + shapeCounter);
             LinkedHashMap<String, Node> staticGlobalOptions = optionButtonsBuilder.getNodes(OptionButtonsBuilder.GLOBAL_NODE_OPTIONS);
             boolean shouldFill = ((ToggleButton) staticGlobalOptions.get("fill_toggle_button")).isSelected();
             rectangle.setFill(shouldFill ? config.getForegroundColor() : null);
@@ -104,11 +106,11 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             nodeMap.put(SHAPE_NAMESPACE + shapeCounter, rectangle);
             renderTree.get(PRIMARY).put(SHAPE_NAMESPACE + shapeCounter, rectangle);
             shapeCounter++;
-            breakPointCounter = 0;
+            anchorCounter = 0;
             isDrawing = true;
             config.setSelectedNode(activeRectangle);
 
-            Circle topLeftAnchor = createBreakPoint(ev.getX(), ev.getY(), renderTree);
+            Circle topLeftAnchor = createAnchorPoint(ev.getX(), ev.getY(), renderTree);
             nodeTree.get(SECONDARY).putIfAbsent(topLeftAnchor.getId(), topLeftAnchor);
             renderTree.get(SECONDARY).putIfAbsent(topLeftAnchor.getId(), topLeftAnchor);
             nodeTree.get(SECONDARY).replace(topLeftAnchor.getId(), topLeftAnchor);
@@ -118,7 +120,7 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             activeRectangle.setTranslateY(Math.min(mouseStartPointY, ev.getY()));
             activeRectangle.setWidth(Math.abs(mouseStartPointX - ev.getX()));
             activeRectangle.setHeight(Math.abs(mouseStartPointY - ev.getY()));
-            Circle bottomRightAnchor = createBreakPoint(ev.getX(), ev.getY(), renderTree);
+            Circle bottomRightAnchor = createAnchorPoint(ev.getX(), ev.getY(), renderTree);
             isDrawing = false;
             nodeTree.get(SECONDARY).putIfAbsent(bottomRightAnchor.getId(), bottomRightAnchor);
             renderTree.get(SECONDARY).putIfAbsent(bottomRightAnchor.getId(), bottomRightAnchor);
@@ -129,45 +131,42 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
     }
 
     /**
-     * Create a path breakpoint node, i.e. a circle-represented point that received a click event,
-     * and set it's onMousePressed event. Each breakpoint circle is also given an
+     * Create a path anchor node, i.e. a circle-represented point that received a click event,
+     * and set it's onMousePressed event. Each anchor circle is also given an
      * id consisting of the  shapeCounter (how many paths this path tool has drawn),
-     * and breakpointCounter variable, the latter of which is the zero-based index
-     * of breakpoints drawn since the path started. The breakpoints id are in this format:
+     * and anchorCounter variable, the latter of which is the zero-based index
+     * of anchors drawn since the path started. The anchors id are in this format:
      * "point_0_0".
-     * @param x the x pos to draw the breakpoint node.
-     * @param y the y pos to draw the breakpoint node.
+     * @param x the x pos to draw the anchor node.
+     * @param y the y pos to draw the anchor node.
      * @param renderTree this node tree this tool gives draw pane to render.
-     * @return the circle object which is the breakpoint node.
+     * @return the circle object which is the anchor node.
      */
-    private Circle createBreakPoint(double x, double y, Map<String, LinkedHashMap<String, Node>> renderTree) {
-        Circle breakPoint = new Circle(x, y, config.getStrokeWidth()+4);
-        breakPoint.setFill(Color.TRANSPARENT);
-        breakPoint.setStroke(Color.GRAY);
-        breakPoint.setId("point_" + shapeCounter + "_" + breakPointCounter);
-        breakPointCounter++;
-        breakPoint.setOnMousePressed(MouseEvent::consume);
-        breakPoint.setOnMouseDragged(event -> {
+    private Circle createAnchorPoint(double x, double y, Map<String, LinkedHashMap<String, Node>> renderTree) {
+        Circle anchor = new Circle(x, y, config.getStrokeWidth()+4);
+        anchor.setFill(Color.TRANSPARENT);
+        anchor.setStroke(Color.GRAY);
+        anchor.setId("point_" + shapeCounter + "_" + anchorCounter);
+        anchorCounter++;
+        anchor.setOnMousePressed(MouseEvent::consume);
+        anchor.setOnMouseDragged(event -> {
             if(isDrawing){
+                //if the rectangle is in drawing mode, you cannot drag its anchors.
                 AppLogger.log(getClass(), 282, "drag not executing");
                 return;
             }
             double eventX = event.getX();
             double eventY = event.getY();
-            if (breakPointCounter == 1) {
-                breakPoint.setCenterX(eventX);
-                breakPoint.setCenterY(eventY);
-                activeRectangle.setWidth(eventX);
-                activeRectangle.setHeight(eventY);
-            } else {
-                activeRectangle.setArcWidth(event.getX() - mouseStartPointX);
-                activeRectangle.setArcHeight(event.getY() - mouseStartPointY);
-            }
+            anchor.setCenterX(eventX);
+            anchor.setCenterY(eventY);
+            activeRectangle.setTranslateX(Math.min(activeRectangle.getTranslateX(), eventX));
+            activeRectangle.setTranslateY(Math.min(activeRectangle.getTranslateY(), eventY));
+            activeRectangle.setWidth(Math.abs(activeRectangle.getTranslateX() - eventX));
+            activeRectangle.setHeight(Math.abs(activeRectangle.getTranslateY() - eventY));
+
         });
-        breakPoint.setOnMouseEntered(event -> {
-            breakPoint.setCursor(Cursor.CROSSHAIR);
-        });
-        return breakPoint;
+        anchor.setOnMouseEntered(event -> anchor.setCursor(Cursor.CROSSHAIR));
+        return anchor;
     }
 
     private void drawOnMouseMoved(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
@@ -181,6 +180,8 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
         ((Spinner<Double>) widthSpinner).getValueFactory().setValue(activeRectangle.getWidth());
         Node heightSpinner = getOptions().getHeightSpinner();
         ((Spinner<Double>) heightSpinner).getValueFactory().setValue(activeRectangle.getHeight());
+        Node rotateSpinner = getOptions().getRotateSpinner();
+        ((Spinner<Double>) rotateSpinner).getValueFactory().setValue(activeRectangle.getRotate());
     }
 
     private void drawOnMouseDragged(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
@@ -199,6 +200,15 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
     @Override
     public void addClickListener(DrawableButtonTool prevSelectedButton) {
         super.addClickListener(prevSelectedButton);
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
+        LinkedHashMap<String, Node> anchorsMap = prevSelectedButton.nodeTree.get(SECONDARY);
+
+        renderTree.get(SECONDARY).putAll(anchorsMap);
+        anchorsMap.clear();
+        DrawPane.removeSecondaryNodeFromShapes(renderTree);
+        config.setSelectedNode(null);
     }
 
     public final class RectangleOptions extends OptionButtonsBuilder{
@@ -317,6 +327,10 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
         }
 
         Node getHeightSpinner () {
+            return (((HBox) getOptions().getNodes(getId()).get("height_box")).getChildren().get(1));
+        }
+
+        Node getRotateSpinner() {
             return (((HBox) getOptions().getNodes(getId()).get("height_box")).getChildren().get(1));
         }
     }

@@ -17,11 +17,15 @@ import javafx.scene.shape.Shape;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public abstract class DrawableButtonTool extends ToolbarButton implements DrawTriggerable, OptionToolbarSettable{
 
     public static final String SECONDARY = "secondary";
     public static final String PRIMARY = "primary";
+
+    // PathButtonTool's own very nodeTree. It's "primary" childNode contains every path appcomponent.DrawPane still has, i.e. not deleted.
+    TreeMap<String, LinkedHashMap<String, Node>> nodeTree = new TreeMap<>();
     protected OptionButtonsBuilder optionButtonsBuilder;
 
     public DrawableButtonTool(String label, GlobalDrawPaneConfig config) {
@@ -111,8 +115,8 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
                 if (toggleButton == toolsMap.get("fill_toggle_button")) canvasActiveNode.setFill(colorPicker.getValue());
                 else canvasActiveNode.setStroke(colorPicker.getValue());
             } else {
-                if (toggleButton == toolsMap.get("stroke_toggle_button")) canvasActiveNode.setFill(null);
-                else canvasActiveNode.setStroke(colorPicker.getValue());
+                if (toggleButton == toolsMap.get("fill_toggle_button")) canvasActiveNode.setFill(null);
+                else canvasActiveNode.setStroke(null);
             }
         }
 
@@ -141,7 +145,7 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             for (Map.Entry<String, Node> newToolOptionSet : newToolOptions.entrySet()) {
                 items.add(newToolOptions.get(newToolOptionSet.getKey()));
             }
-            config.setSelectedNode(null);
+//            config.setSelectedNode(null);
         }
     }
 }

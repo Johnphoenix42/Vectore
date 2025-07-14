@@ -1,13 +1,11 @@
 package appcomponent;
 
 import appcustomcontrol.*;
-import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -48,8 +46,8 @@ public class ToolsPanel extends ToolBar {
         CircleButtonTool circleButton = new CircleButtonTool(config) {
             @Override
             public void setCurrentToolbarOptions(DrawableButtonTool tool) {
-                getOptions().switchToolOptions(items, getId());
                 optionButtonsBuilder = this.getOptions();
+                getOptions().switchToolOptions(items, getId());
             }
         };
 
