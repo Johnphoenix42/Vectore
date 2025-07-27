@@ -131,7 +131,7 @@ public abstract class PathButtonTool extends DrawableButtonTool {
         renderTree.get(SECONDARY).putAll(breakPointsMap);
         breakPointsMap.clear();
         DrawPane.removeSecondaryNodeFromShapes(renderTree);
-        config.setSelectedNode(null);
+        config.setSelectedNode(activePath);
     }
 
     private void drawOnMousePressed(MouseEvent ev, TreeMap<String, LinkedHashMap<String, Node>> renderTree){

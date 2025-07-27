@@ -10,6 +10,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AppMenuBar extends MenuBar {
 
@@ -85,7 +86,12 @@ public class AppMenuBar extends MenuBar {
                     });
 
                     dialog.showAndWait()
-                            .filter(response -> response.getWidth() > 1 && response.getHeight() > 1)
+                            .filter(response -> {
+                                AtomicBoolean closed = new AtomicBoolean(false);
+                                dialog.setOnCloseRequest(event1 -> {
+                                    closed.set(true);});
+                                return !closed.get() && response.getWidth() > 1 && response.getHeight() > 1;
+                            })
                             .ifPresent(consumer);
 
                     /*final Button btOk = (Button) dialog.getDialogPane().lookupButton(createButtonType);

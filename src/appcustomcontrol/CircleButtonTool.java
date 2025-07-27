@@ -35,13 +35,14 @@ public abstract class CircleButtonTool extends DrawableButtonTool {
     private boolean isDrawing = false;
     private double mouseStartPointX = 0, mouseStartPointY = 0;
     private int shapeCounter = 0;
-    private int anchorCounter = 0;
+    Vector2d radiusVector;
 
     public CircleButtonTool(GlobalDrawPaneConfig config) {
         super("Circle", config);
         optionButtonsBuilder = new CircleOptions(config);
         nodeTree.put(PRIMARY, new LinkedHashMap<>());
         nodeTree.put(SECONDARY, new LinkedHashMap<>());
+        radiusVector = new Vector2d();
     }
 
     @Override
@@ -59,6 +60,7 @@ public abstract class CircleButtonTool extends DrawableButtonTool {
         return renderTree;
     }
     private void drawOnMousePressed(MouseEvent ev, TreeMap<String, LinkedHashMap<String, Node>> renderTree){
+        Circle anchor = null;
         if(!isDrawing) {
             mouseStartPointX = ev.getX();
             mouseStartPointY = ev.getY();
@@ -78,18 +80,22 @@ public abstract class CircleButtonTool extends DrawableButtonTool {
             renderTree.get(PRIMARY).put(SHAPE_NAMESPACE + shapeCounter, circle);
             shapeCounter++;
             isDrawing = true;
+            anchor = createAnchorPoint(ev.getX(), ev.getY(), 0, renderTree);
+            anchor.setId("point_" + shapeCounter + "_" + 0);
         }else {
             double deltaX = Math.abs(mouseStartPointX - ev.getX());
             double deltaY = Math.abs(mouseStartPointY - ev.getY());
             double radius = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
-            activeCircle.setRadius(radius);
+            radiusVector.set(mouseStartPointX - ev.getX(), mouseStartPointY - ev.getY());
+            activeCircle.setRadius(radiusVector.length());
             isDrawing = false;
+            anchor = createAnchorPoint(ev.getX(), ev.getY(), 1, renderTree);
+            anchor.setId("point_" + shapeCounter + "_" + 1);
         }
-        Circle topLeftAnchor = createAnchorPoint(ev.getX(), ev.getY(), renderTree);
-        nodeTree.get(SECONDARY).putIfAbsent(topLeftAnchor.getId(), topLeftAnchor);
-        renderTree.get(SECONDARY).putIfAbsent(topLeftAnchor.getId(), topLeftAnchor);
-        nodeTree.get(SECONDARY).replace(topLeftAnchor.getId(), topLeftAnchor);
-        renderTree.get(SECONDARY).replace(topLeftAnchor.getId(), topLeftAnchor);
+        nodeTree.get(SECONDARY).putIfAbsent(anchor.getId(), anchor);
+        renderTree.get(SECONDARY).putIfAbsent(anchor.getId(), anchor);
+        nodeTree.get(SECONDARY).replace(anchor.getId(), anchor);
+        renderTree.get(SECONDARY).replace(anchor.getId(), anchor);
     }
 
     /**
@@ -101,33 +107,33 @@ public abstract class CircleButtonTool extends DrawableButtonTool {
      * "point_0_0".
      * @param x the x pos to draw the anchor node.
      * @param y the y pos to draw the anchor node.
+     * @param anchorCounter specific index for the anchor being drawn - first anchor is zero and so on.
      * @param renderTree this node tree this tool gives draw pane to render.
      * @return the circle object which is the anchor node.
      */
-    private Circle createAnchorPoint(double x, double y, Map<String, LinkedHashMap<String, Node>> renderTree) {
+    private Circle createAnchorPoint(double x, double y, int anchorCounter, Map<String, LinkedHashMap<String, Node>> renderTree) {
         Circle anchor = new Circle(x, y, config.getStrokeWidth()+4);
         anchor.setFill(Color.TRANSPARENT);
         anchor.setStroke(Color.GRAY);
         anchor.setId("point_" + shapeCounter + "_" + anchorCounter);
-        anchorCounter++;
         anchor.setOnMousePressed(MouseEvent::consume);
         anchor.setOnMouseDragged(event -> {
             if(isDrawing){
                 //if the rectangle is in drawing mode, you cannot drag its anchors.
-                AppLogger.log(getClass(), 282, "drag not executing");
+                AppLogger.log(getClass(), 117, "drag not executing");
                 return;
             }
             double eventX = event.getX();
             double eventY = event.getY();
+            anchor.setCenterX(eventX);
+            anchor.setCenterY(eventY);
             if (anchorCounter == 0) {
-                anchor.setCenterX(eventX);
-                anchor.setCenterY(eventY);
-                activeCircle.setTranslateX(Math.min(activeCircle.getTranslateX(), eventX));
-                activeCircle.setTranslateY(Math.min(activeCircle.getTranslateY(), eventY));
+                activeCircle.setTranslateX(eventX);
+                activeCircle.setTranslateY(eventY);
+                Circle anchor2 = (Circle) nodeTree.get(SECONDARY).get("point_" + shapeCounter + "_" + 1);
+                anchor2.setCenterX(eventX - radiusVector.getX());
+                anchor2.setCenterY(eventY - radiusVector.getY());
             } else {
-                anchor.setCenterX(eventX);
-                anchor.setCenterY(eventY);
-                Vector2d radiusVector = new Vector2d();
                 radiusVector.set(activeCircle.getTranslateX() - eventX, activeCircle.getTranslateY() - eventY);
                 activeCircle.setRadius(radiusVector.length());
             }
@@ -173,7 +179,7 @@ public abstract class CircleButtonTool extends DrawableButtonTool {
         renderTree.get(SECONDARY).putAll(anchorsMap);
         anchorsMap.clear();
         DrawPane.removeSecondaryNodeFromShapes(renderTree);
-        config.setSelectedNode(null);
+        config.setSelectedNode(activeCircle);
     }
 
     public final class CircleOptions extends OptionButtonsBuilder{

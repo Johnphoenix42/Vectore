@@ -24,6 +24,7 @@ import javafx.scene.text.Text;
 import javafx.util.StringConverter;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class RectangleButtonTool extends DrawableButtonTool {
 
@@ -32,8 +33,8 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
     private Rectangle activeRectangle = null;
     private boolean isDrawing = false;
     private double mouseStartPointX = 0, mouseStartPointY = 0;
+    private double rectBottomPointX = 0, rectBottomPointY = 0;
     private int shapeCounter = 0;
-    private int anchorCounter = 0;
 
     public RectangleButtonTool(GlobalDrawPaneConfig config) {
         super("Rect", config);
@@ -87,6 +88,7 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
     }
 
     private void drawOnMousePressed(MouseEvent ev, TreeMap<String, LinkedHashMap<String, Node>> renderTree){
+        Circle anchor = null;
         if(!isDrawing) {
             mouseStartPointX = ev.getX();
             mouseStartPointY = ev.getY();
@@ -95,8 +97,8 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             LinkedHashMap<String, Node> staticGlobalOptions = optionButtonsBuilder.getNodes(OptionButtonsBuilder.GLOBAL_NODE_OPTIONS);
             boolean shouldFill = ((ToggleButton) staticGlobalOptions.get("fill_toggle_button")).isSelected();
             rectangle.setFill(shouldFill ? config.getForegroundColor() : null);
-            rectangle.setTranslateX(mouseStartPointX);
-            rectangle.setTranslateY(mouseStartPointY);
+            rectangle.setX(mouseStartPointX);
+            rectangle.setY(mouseStartPointY);
             rectangle.setStrokeWidth(config.getStrokeWidth());
             boolean shouldStroke = ((ToggleButton) staticGlobalOptions.get("stroke_toggle_button")).isSelected();
             rectangle.setStroke(shouldStroke ? super.config.getForegroundColor() : null);
@@ -106,28 +108,24 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             nodeMap.put(SHAPE_NAMESPACE + shapeCounter, rectangle);
             renderTree.get(PRIMARY).put(SHAPE_NAMESPACE + shapeCounter, rectangle);
             shapeCounter++;
-            anchorCounter = 0;
             isDrawing = true;
             config.setSelectedNode(activeRectangle);
 
-            Circle topLeftAnchor = createAnchorPoint(ev.getX(), ev.getY(), renderTree);
-            nodeTree.get(SECONDARY).putIfAbsent(topLeftAnchor.getId(), topLeftAnchor);
-            renderTree.get(SECONDARY).putIfAbsent(topLeftAnchor.getId(), topLeftAnchor);
-            nodeTree.get(SECONDARY).replace(topLeftAnchor.getId(), topLeftAnchor);
-            renderTree.get(SECONDARY).replace(topLeftAnchor.getId(), topLeftAnchor);
+            anchor = createAnchorPoint(ev.getX(), ev.getY(), 0, renderTree);
         }else {
-            activeRectangle.setTranslateX(Math.min(mouseStartPointX, ev.getX()));
-            activeRectangle.setTranslateY(Math.min(mouseStartPointY, ev.getY()));
+            activeRectangle.setX(Math.min(mouseStartPointX, ev.getX()));
+            activeRectangle.setY(Math.min(mouseStartPointY, ev.getY()));
             activeRectangle.setWidth(Math.abs(mouseStartPointX - ev.getX()));
             activeRectangle.setHeight(Math.abs(mouseStartPointY - ev.getY()));
-            Circle bottomRightAnchor = createAnchorPoint(ev.getX(), ev.getY(), renderTree);
+
+            anchor = createAnchorPoint(ev.getX(), ev.getY(), 1, renderTree);
             isDrawing = false;
-            nodeTree.get(SECONDARY).putIfAbsent(bottomRightAnchor.getId(), bottomRightAnchor);
-            renderTree.get(SECONDARY).putIfAbsent(bottomRightAnchor.getId(), bottomRightAnchor);
-            nodeTree.get(SECONDARY).replace(bottomRightAnchor.getId(), bottomRightAnchor);
-            renderTree.get(SECONDARY).replace(bottomRightAnchor.getId(), bottomRightAnchor);
         }
 
+        nodeTree.get(SECONDARY).putIfAbsent(anchor.getId(), anchor);
+        renderTree.get(SECONDARY).putIfAbsent(anchor.getId(), anchor);
+        nodeTree.get(SECONDARY).replace(anchor.getId(), anchor);
+        renderTree.get(SECONDARY).replace(anchor.getId(), anchor);
     }
 
     /**
@@ -139,16 +137,20 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
      * "point_0_0".
      * @param x the x pos to draw the anchor node.
      * @param y the y pos to draw the anchor node.
+     * @param anchorCounter specific index for the anchor being drawn - first anchor is zero and so on.
      * @param renderTree this node tree this tool gives draw pane to render.
      * @return the circle object which is the anchor node.
      */
-    private Circle createAnchorPoint(double x, double y, Map<String, LinkedHashMap<String, Node>> renderTree) {
+    private Circle createAnchorPoint(double x, double y, int anchorCounter, Map<String, LinkedHashMap<String, Node>> renderTree) {
         Circle anchor = new Circle(x, y, config.getStrokeWidth()+4);
         anchor.setFill(Color.TRANSPARENT);
         anchor.setStroke(Color.GRAY);
         anchor.setId("point_" + shapeCounter + "_" + anchorCounter);
-        anchorCounter++;
-        anchor.setOnMousePressed(MouseEvent::consume);
+        anchor.setOnMousePressed(event -> {
+            rectBottomPointX = Math.max(event.getX(), event.getX() + activeRectangle.getWidth());
+            rectBottomPointY = Math.max(event.getY(), event.getY() + activeRectangle.getHeight());
+            event.consume();
+        });
         anchor.setOnMouseDragged(event -> {
             if(isDrawing){
                 //if the rectangle is in drawing mode, you cannot drag its anchors.
@@ -157,13 +159,26 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
             }
             double eventX = event.getX();
             double eventY = event.getY();
-            anchor.setCenterX(eventX);
-            anchor.setCenterY(eventY);
-            activeRectangle.setTranslateX(Math.min(activeRectangle.getTranslateX(), eventX));
-            activeRectangle.setTranslateY(Math.min(activeRectangle.getTranslateY(), eventY));
-            activeRectangle.setWidth(Math.abs(activeRectangle.getTranslateX() - eventX));
-            activeRectangle.setHeight(Math.abs(activeRectangle.getTranslateY() - eventY));
-
+            if (anchorCounter == 0) {
+                anchor.setCenterX(eventX);
+                anchor.setCenterY(eventY);
+                activeRectangle.setX(eventX);
+                activeRectangle.setY(eventY);
+                Circle anchor2 = (Circle) nodeTree.get(SECONDARY).get("point_" + shapeCounter + "_" + 1);
+                anchor2.setCenterX(activeRectangle.getX() + activeRectangle.getWidth());
+                anchor2.setCenterY(activeRectangle.getY() + activeRectangle.getHeight());
+            } else {
+                anchor.setCenterX(Math.max(eventX, activeRectangle.getX()));
+                anchor.setCenterY(Math.max(eventY, activeRectangle.getY()));
+                activeRectangle.setWidth(Math.max(0, eventX - mouseStartPointX));
+                activeRectangle.setHeight(Math.max(0, eventY - mouseStartPointY));
+            }
+            event.consume();
+        });
+        anchor.setOnMouseReleased(event -> {
+            mouseStartPointX = Math.min(activeRectangle.getX(), event.getX());
+            mouseStartPointY = Math.min(activeRectangle.getY(), event.getY());
+            System.out.println(mouseStartPointX + ",  " + mouseStartPointY);
         });
         anchor.setOnMouseEntered(event -> anchor.setCursor(Cursor.CROSSHAIR));
         return anchor;
@@ -171,8 +186,8 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
 
     private void drawOnMouseMoved(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
         if (!isDrawing) return;
-        activeRectangle.setTranslateX(Math.min(mouseStartPointX, event.getX()));
-        activeRectangle.setTranslateY(Math.min(mouseStartPointY, event.getY()));
+        activeRectangle.setX(Math.min(mouseStartPointX, event.getX()));
+        activeRectangle.setY(Math.min(mouseStartPointY, event.getY()));
         activeRectangle.setWidth(Math.abs(mouseStartPointX - event.getX()));
         activeRectangle.setHeight(Math.abs(mouseStartPointY - event.getY()));
 
@@ -186,8 +201,8 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
 
     private void drawOnMouseDragged(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
         if (!isDrawing) return;
-        activeRectangle.setTranslateX(Math.min(mouseStartPointX, event.getX()));
-        activeRectangle.setTranslateY(Math.min(mouseStartPointY, event.getY()));
+        activeRectangle.setX(Math.min(mouseStartPointX, event.getX()));
+        activeRectangle.setY(Math.min(mouseStartPointY, event.getY()));
         activeRectangle.setWidth(Math.abs(mouseStartPointX - event.getX()));
         activeRectangle.setHeight(Math.abs(mouseStartPointY - event.getY()));
     }
@@ -208,7 +223,7 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
         renderTree.get(SECONDARY).putAll(anchorsMap);
         anchorsMap.clear();
         DrawPane.removeSecondaryNodeFromShapes(renderTree);
-        config.setSelectedNode(null);
+        config.setSelectedNode(activeRectangle);
     }
 
     public final class RectangleOptions extends OptionButtonsBuilder{
@@ -331,54 +346,7 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
         }
 
         Node getRotateSpinner() {
-            return (((HBox) getOptions().getNodes(getId()).get("height_box")).getChildren().get(1));
-        }
-    }
-
-    private static class DoubleSpinnerValueFactory extends SpinnerValueFactory<Double> {
-        private final Spinner<Double> numberSpinner;
-        private final InDecrementListener<Double> inDecrementListener;
-
-        public DoubleSpinnerValueFactory(Spinner<Double> numberSpinner, InDecrementListener<Double> inDecrementListener) {
-            this.numberSpinner = numberSpinner;
-            this.inDecrementListener = inDecrementListener;
-            setValue(10.0);
-        }
-
-        @Override
-        public void decrement(int steps) {
-            SpinnerValueFactory<Double> valueFactory = numberSpinner.getValueFactory();
-            if (valueFactory == null) {
-                throw new IllegalStateException("Can't decrement Spinner with a null SpinnerValueFactory");
-            }
-            commitEditorText(valueFactory);
-            Double oldValue = valueFactory.getValue();
-            valueFactory.setValue((oldValue != null ? oldValue : 0) - steps);
-
-            inDecrementListener.onInDecrement(valueFactory);
-        }
-
-        @Override
-        public void increment(int steps) {
-            SpinnerValueFactory<Double> valueFactory = numberSpinner.getValueFactory();
-            if (valueFactory == null) {
-                throw new IllegalStateException("Can't decrement Spinner with a null SpinnerValueFactory");
-            }
-            commitEditorText(valueFactory);
-            Double oldValue = valueFactory.getValue();
-            valueFactory.setValue(steps + (oldValue != null ? oldValue : 0));
-
-            inDecrementListener.onInDecrement(valueFactory);
-        }
-
-        private void commitEditorText(SpinnerValueFactory<Double> valueFactory){
-            String text = numberSpinner.getEditor().getText();
-            if (valueFactory != null) {
-                StringConverter<Double> converter = valueFactory.getConverter();
-                if (converter == null) return;
-                Double value = converter.fromString(text);
-                valueFactory.setValue(value);
-            }
+            return (((HBox) getOptions().getNodes(getId()).get("rotation_box")).getChildren().get(1));
         }
     }
 }
