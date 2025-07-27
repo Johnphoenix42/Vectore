@@ -99,4 +99,12 @@ public class ToolsPanel extends ToolBar {
         optionButtonsBuilder.switchToolOptions(items, button.getId());
     }
 
+    class ButtonTool<T extends DrawableButtonTool> {
+
+        ButtonTool(T t){
+            //t.setCurrentToolbarOptions(DrawableButtonTool);
+        }
+
+    }
+
 }
