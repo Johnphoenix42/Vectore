@@ -1,2 +1,2 @@
 # Vectore
-SVG creator
+SVG creator made in Java/Javafx
