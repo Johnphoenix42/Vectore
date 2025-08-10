@@ -8,6 +8,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.input.InputEvent;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -40,6 +41,8 @@ public class DrawPane extends StackPane {
         canvasPane.setEffect(new DropShadow(6, Color.BLACK));
 
         canvasPane.setClip(new Rectangle(width, height));
+        canvasPane.setFocusTraversable(true);
+        canvasPane.requestFocus();
         DrawPane.activeCanvasPane = canvasPane;
         return canvasPane;
     }
@@ -109,6 +112,10 @@ public class DrawPane extends StackPane {
         canvasPane.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
             renderNodes(canvasPane, MouseEvent.MOUSE_RELEASED, event);
             unRenderNodes(canvasPane, MouseEvent.MOUSE_RELEASED, event);
+        });
+        canvasPane.addEventHandler(KeyEvent.KEY_TYPED, event -> {
+            renderNodes(canvasPane, KeyEvent.KEY_TYPED, event);
+            unRenderNodes(canvasPane, KeyEvent.KEY_TYPED, event);
         });
     }
 
