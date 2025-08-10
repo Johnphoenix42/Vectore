@@ -76,10 +76,10 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
                 remain active. If they are, it clears them all except for the first control point
                  */
                 if (anchorsMap.containsKey("point_" + (shapeCounter - 1) + "_0")) {
-                    Node newestNodeanchor = anchorsMap.remove("point_" + shapeCounter + "_0");
+                    Node newestNodeAnchor = anchorsMap.remove("point_" + shapeCounter + "_0");
                     renderTree.get(SECONDARY).putAll(anchorsMap);
                     anchorsMap.clear();
-                    anchorsMap.put("point_" + shapeCounter + "_0", newestNodeanchor);
+                    anchorsMap.put("point_" + shapeCounter + "_0", newestNodeAnchor);
                 }
             }
             return renderTree;

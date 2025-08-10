@@ -1,6 +1,7 @@
 package appcustomcontrol;
 
 import appcomponent.DrawPane;
+import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -8,6 +9,7 @@ import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.InputEvent;
@@ -16,7 +18,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
-import javafx.scene.shape.Path;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -26,17 +29,16 @@ import java.util.*;
 public abstract class TextButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "text_";
-    private final TextAreaInterface textAreaInterface;
-    private boolean isTextDrawing = false;
+    private boolean isDrawing = false;
     private final TextOptions optionButtonsBuilder;
-    private Rectangle activeText = null;
+    private Rectangle activeTextBounds = null;
+    private Text activeText = null;
     private double mouseStartPointX = 0, mouseStartPointY = 0;
     private int shapeCounter = 0;
+    private boolean isTextWriting = false;
 
     public TextButtonTool(GlobalDrawPaneConfig config) {
         super("Text", config);
-        textAreaInterface = new TextAreaInterface(Font.font(
-                "Arial", 20), 0, 0);
         optionButtonsBuilder = new TextOptions(config);
         nodeTree.put(PRIMARY, new LinkedHashMap<>());
         nodeTree.put(SECONDARY, new LinkedHashMap<>());
@@ -54,42 +56,132 @@ public abstract class TextButtonTool extends DrawableButtonTool {
             drawOnMouseDragged((MouseEvent) event, renderTree);
         } else if (eventType == MouseEvent.MOUSE_RELEASED) {
             drawOnMouseReleased((MouseEvent) event, renderTree);
+        } else if (eventType == KeyEvent.KEY_TYPED) {
+            drawOnKeyTyped((KeyEvent) event, renderTree);
         }
         return renderTree;
     }
 
-    private void drawOnMousePressed(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
-        mouseStartPointX = event.getX();
-        mouseStartPointY = event.getY();
+    private void drawOnKeyTyped(KeyEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
+        activeText.setText(activeText.getText() + event.getCharacter());
+    }
+
+    private void drawOnMousePressed(MouseEvent ev, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
+        Circle anchor = null;
+        isTextWriting = false;
+        if(!isDrawing) {
+            mouseStartPointX = ev.getX();
+            mouseStartPointY = ev.getY();
+            activeTextBounds = (Rectangle) nodeTree.get(SECONDARY).getOrDefault(SHAPE_NAMESPACE + 0, new Rectangle(0, 0));
+            activeTextBounds.setId(SHAPE_NAMESPACE + 0);
+            activeTextBounds.setFill(Color.TRANSPARENT);
+            activeTextBounds.setX(mouseStartPointX);
+            activeTextBounds.setY(mouseStartPointY);
+            activeTextBounds.setStrokeWidth(config.getStrokeWidth());
+            activeTextBounds.setStroke(Color.BLACK);
+            activeTextBounds.setStrokeDashOffset(20);
+
+            if (activeTextBounds != null) {
+                activeTextBounds.setOnMouseEntered(event -> {
+                    activeTextBounds.setCursor(Cursor.TEXT);
+                });
+                activeTextBounds.setOnMousePressed(event -> {
+                    isTextWriting = true;
+                    event.consume();
+                });
+            }
+            isDrawing = true;
+            renderTree.get(SECONDARY).put(SHAPE_NAMESPACE + 0, activeTextBounds);
+            nodeTree.get(SECONDARY).putIfAbsent(SHAPE_NAMESPACE + 0, activeTextBounds);
+
+            anchor = createAnchorPoint(ev.getX(), ev.getY(), 0, renderTree);
+        }
+
+        if (anchor != null) {
+            nodeTree.get(SECONDARY).putIfAbsent(anchor.getId(), anchor);
+            renderTree.get(SECONDARY).putIfAbsent(anchor.getId(), anchor);
+            nodeTree.get(SECONDARY).replace(anchor.getId(), anchor);
+            renderTree.get(SECONDARY).replace(anchor.getId(), anchor);
+        }
+    }
+    private Circle createAnchorPoint(double x, double y, int anchorCounter, Map<String, LinkedHashMap<String, Node>> renderTree) {
+        Circle anchor = (Circle) nodeTree.get(SECONDARY).getOrDefault("point_" + 0 + "_" + anchorCounter, new Circle(x, y, config.getStrokeWidth()+4));
+        anchor.setCenterX(x);
+        anchor.setCenterY(y);
+        anchor.setFill(Color.TRANSPARENT);
+        anchor.setStroke(Color.GRAY);
+        anchor.setId("point_" + shapeCounter + "_" + anchorCounter);
+        anchor.setOnMouseDragged(event -> {
+            if(isDrawing){
+                //if the rectangle is in drawing mode, you cannot drag its anchors.
+                AppLogger.log(getClass(), 282, "drag not executing");
+                return;
+            }
+            double eventX = event.getX();
+            double eventY = event.getY();
+            if (anchorCounter == 0) {
+                anchor.setCenterX(eventX);
+                anchor.setCenterY(eventY);
+                activeTextBounds.setX(eventX);
+                activeTextBounds.setY(eventY);
+                activeText.setX(eventX);
+                activeText.setY(eventY + activeText.getFont().getSize());
+                Circle anchor2 = (Circle) nodeTree.get(SECONDARY).get("point_" + shapeCounter + "_" + 1);
+                anchor2.setCenterX(activeTextBounds.getX() + activeTextBounds.getWidth());
+                anchor2.setCenterY(activeTextBounds.getY() + activeTextBounds.getHeight());
+            } else {
+                anchor.setCenterX(Math.max(eventX, activeTextBounds.getX()));
+                anchor.setCenterY(Math.max(eventY, activeTextBounds.getY()));
+                activeTextBounds.setWidth(Math.max(0, eventX - mouseStartPointX));
+                activeTextBounds.setHeight(Math.max(0, eventY - mouseStartPointY));
+            }
+            event.consume();
+        });
+        anchor.setOnMouseReleased(event -> {
+            mouseStartPointX = Math.min(activeTextBounds.getX(), event.getX());
+            mouseStartPointY = Math.min(activeTextBounds.getY(), event.getY());
+        });
+        anchor.setOnMouseEntered(event -> anchor.setCursor(Cursor.CROSSHAIR));
+        return anchor;
     }
 
     private void drawOnMouseDragged(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
-        double boxLength = Math.abs(event.getX() - mouseStartPointX);
-        double boxDepth = Math.abs(event.getY() - mouseStartPointY);
-        mouseStartPointX = Math.min(event.getX(), mouseStartPointX);
-        mouseStartPointY = Math.min(event.getY(), mouseStartPointY);
+        if (!isDrawing) return;
+        activeTextBounds.setX(Math.min(mouseStartPointX, event.getX()));
+        activeTextBounds.setY(Math.min(mouseStartPointY, event.getY()));
+        activeTextBounds.setWidth(Math.abs(mouseStartPointX - event.getX()));
+        activeTextBounds.setHeight(Math.abs(mouseStartPointY - event.getY()));
     }
 
     private void drawOnMouseReleased(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
-        isTextDrawing = !isTextDrawing;
-        if (isTextDrawing) {
-            textAreaInterface.x = event.getX();
-            textAreaInterface.y = event.getY();
-            TextArea textArea = getTextArea();
-            textArea.setTranslateX(textAreaInterface.x);
-            textArea.setTranslateY(textAreaInterface.y);
-            nodeTree.get(SECONDARY).put(textArea.getId(), textArea);
-        } else {
-            String textString = textAreaInterface.getTextArea().getText();
-            if(textString.isEmpty()) return;
-            Text text = new Text(textString);
-            text.setTranslateX(textAreaInterface.x);
-            text.setTranslateY(textAreaInterface.y);
-            text.setFont(textAreaInterface.font);
-            textAreaInterface.getTextArea().setText("");
-            isTextDrawing = !isTextDrawing;
-            nodeTree.get(SECONDARY).put(SHAPE_NAMESPACE + shapeCounter, text);
+        isDrawing = false;
+        if (!isTextWriting) {
+            if (activeTextBounds.getWidth() < 5 && activeTextBounds.getHeight() < 5) {
+                activeTextBounds.setWidth(30);
+                activeTextBounds.setHeight(10);
+            }
+            Text text = new Text();
+            text.setX(activeTextBounds.getX());
+            text.setY(activeTextBounds.getY() + text.getFont().getSize());
+            text.setFont(Font.font(10));
+            activeText = text;
+            activeText.setWrappingWidth(activeTextBounds.getWidth());
+            config.setSelectedNode(activeText);
+            shapeCounter++;
+            renderTree.get(PRIMARY).put(SHAPE_NAMESPACE + shapeCounter, text);
+            nodeTree.get(PRIMARY).put(SHAPE_NAMESPACE + shapeCounter, text);
+            DrawPane.getPane().requestFocus();
+            text.setOnMouseEntered(textEvent -> {
+                text.setCursor(Cursor.TEXT);
+            });
+            text.setOnMousePressed(textEvent -> {
+                setAsCurrentlySelectedTool();
+                config.setCurrentTool(TextButtonTool.this);
+                setCurrentToolbarOptions(TextButtonTool.this);
+                textEvent.consume();
+            });
         }
+        isTextWriting = true;
     }
 
     @Override
@@ -99,14 +191,30 @@ public abstract class TextButtonTool extends DrawableButtonTool {
 
     @Override
     public <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
-        if (eventType != MouseEvent.MOUSE_PRESSED) return null;
-        if (isTextDrawing) return null;
-        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
-        LinkedHashMap<String, Node> nodeMap = new LinkedHashMap<>();
-        TextArea textArea = textAreaInterface.getTextArea();
-        nodeMap.put(textArea.getId(), textArea);
-        renderTree.put(PRIMARY, nodeMap);
-        return renderTree;
+        //Keep in mind that the draw method will run before this one. That means booleans can be weird here.
+        /* if (eventType == MouseEvent.MOUSE_PRESSED) {
+            TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+            renderTree.put(PRIMARY, new LinkedHashMap<>());
+            renderTree.put(SECONDARY, new LinkedHashMap<>());
+            LinkedHashMap<String, Node> anchorsMap = nodeTree.get(SECONDARY);
+
+            //!isDrawing at this point means rectangle is not drawing.
+            if (!isDrawing) {
+
+                /*
+                This next block checks if a new Path has been created and the last path's control points
+                remain active. If they are, it clears them all except for the first control point
+                 */
+                /*if (anchorsMap.containsKey("point_" + (shapeCounter - 1) + "_0")) {
+                    Node newestNodeAnchor = anchorsMap.remove("point_" + shapeCounter + "_0");
+                    renderTree.get(SECONDARY).putAll(anchorsMap);
+                    anchorsMap.clear();
+                    anchorsMap.put("point_" + shapeCounter + "_0", newestNodeAnchor);
+                }
+            }
+            return renderTree;
+        }*/
+        return null;
     }
 
     @Override
@@ -117,43 +225,12 @@ public abstract class TextButtonTool extends DrawableButtonTool {
         renderTree.put(SECONDARY, new LinkedHashMap<>());
         LinkedHashMap<String, Node> anchorsMap = prevSelectedButton.nodeTree.get(SECONDARY);
 
+        // Copy every secondary node from the last selected button into this buttons render tree so that
+        // it can be removed from to canvas
         renderTree.get(SECONDARY).putAll(anchorsMap);
         anchorsMap.clear();
         DrawPane.removeSecondaryNodeFromShapes(renderTree);
         config.setSelectedNode(null);
-    }
-
-    private TextArea getTextArea() {
-        TextArea textArea = textAreaInterface.getTextArea();
-        textArea.setWrapText(true);
-        textArea.requestFocus();
-        textArea.setPromptText("Write Here");
-        textArea.setFont(textAreaInterface.font);
-        textArea.setTranslateX(textAreaInterface.x);
-        textArea.setTranslateY(textAreaInterface.y);
-        textArea.setMinSize(50, 75);
-        textArea.setPrefSize(100, 150);
-        textArea.setMaxSize(200, 100);
-        return textArea;
-    }
-
-    private static class TextAreaInterface{
-
-        private final static TextArea textArea = new TextArea();
-        private double x;
-        private double y;
-        private final Font font;
-
-        TextAreaInterface(Font font, double x, double y){
-            textArea.setId("textarea");
-            this.x = x;
-            this.y = y;
-            this.font = font;
-        }
-
-        TextArea getTextArea(){
-            return textArea;
-        }
     }
 
     public final class TextOptions extends OptionButtonsBuilder{
@@ -161,16 +238,12 @@ public abstract class TextButtonTool extends DrawableButtonTool {
         private TextOptions(GlobalDrawPaneConfig config){
             super(config);
             double fieldWidth = 20;
-            HBox widthBox = createWidthToolEntry(fieldWidth);
-            HBox heightBox = createHeightToolEntry(fieldWidth);
-            HBox rotationBox = createRotationToolEntry(fieldWidth);
+            HBox fontSizeBox = createWidthToolEntry(fieldWidth);
 
             Separator separator = new Separator(Orientation.VERTICAL);
 
             LinkedHashMap<String, Node> nodeList = nodeMap.getOrDefault(getId(), new LinkedHashMap<>());
-            nodeList.put("width_box", widthBox);
-            nodeList.put("height_box", heightBox);
-            nodeList.put("rotation_box", rotationBox);
+            nodeList.put("width_box", fontSizeBox);
             nodeList.put("separator_1", separator);
             nodeMap.put(getId(), nodeList);
         }
@@ -189,66 +262,25 @@ public abstract class TextButtonTool extends DrawableButtonTool {
 
         private HBox createWidthToolEntry(double fieldWidth){
             Spinner<Double> numberSpinner = new Spinner<>(-500, 500, 10, 1);
-            HBox box = createFieldToolEntry(numberSpinner, "width", fieldWidth);
+            HBox box = createFieldToolEntry(numberSpinner, "size", fieldWidth);
             EventHandler<KeyEvent> keyHandler = event -> {
                 if(nodeTree.get(PRIMARY).isEmpty()) return;
 
                 String value = sanitizeTextField(numberSpinner, event);
                 try {
-                    activeText.setWidth(Double.parseDouble(value));
+                    activeText.setFont(Font.font(Double.parseDouble(value)));
                 } catch (NumberFormatException ex) {
-                    activeText.setWidth(activeText.getWidth());
+                    System.out.println(">>Number Format error");
                 }
             };
             numberSpinner.getEditor().setOnKeyReleased(keyHandler);
             numberSpinner.setValueFactory(new DoubleSpinnerValueFactory(numberSpinner, (SpinnerValueFactory<Double> valueFactory) -> {
-                if (activeText == null) return;
-                activeText.setWidth(valueFactory.getValue());
+                if (activeTextBounds == null) return;
+                activeText.setFont(Font.font(valueFactory.getValue()));
             }));
             return box;
         }
 
-        private HBox createHeightToolEntry(double fieldWidth){
-            Spinner<Double> numberSpinner = new Spinner<>(-500, 500, 10, 1);
-            HBox box = createFieldToolEntry(numberSpinner, "height", fieldWidth);
-            EventHandler<KeyEvent> keyHandler = event -> {
-                if(nodeTree.get(PRIMARY).isEmpty()) return;
-
-                String value = sanitizeTextField(numberSpinner, event);
-                try {
-                    activeText.setHeight(Double.parseDouble(value));
-                } catch (NumberFormatException ex) {
-                    activeText.setHeight(activeText.getHeight());
-                }
-            };
-            numberSpinner.getEditor().setOnKeyReleased(keyHandler);
-            numberSpinner.setValueFactory(new DoubleSpinnerValueFactory(numberSpinner, (SpinnerValueFactory<Double> valueFactory) -> {
-                if (activeText == null) return;
-                activeText.setHeight(valueFactory.getValue());
-            }));
-            return box;
-        }
-
-        private HBox createRotationToolEntry(double fieldWidth){
-            Spinner<Double> numberSpinner = new Spinner<>(-500, 500, 10);
-            HBox box = createFieldToolEntry(numberSpinner, "rotate", fieldWidth);
-            EventHandler<KeyEvent> keyHandler = event -> {
-                if(nodeTree.get(PRIMARY).isEmpty()) return;
-
-                String value = sanitizeTextField(numberSpinner, event);
-                try {
-                    activeText.setRotate(Double.parseDouble(value));
-                } catch (NumberFormatException ex) {
-                    activeText.setRotate(activeText.getRotate());
-                }
-            };
-            numberSpinner.getEditor().setOnKeyReleased(keyHandler);
-            numberSpinner.setValueFactory(new DoubleSpinnerValueFactory(numberSpinner, (SpinnerValueFactory<Double> valueFactory) -> {
-                if (activeText == null) return;
-                activeText.setRotate(valueFactory.getValue());
-            }));
-            return box;
-        }
 
         private String sanitizeTextField(Spinner<Double> spinner, KeyEvent event){
             TextField textField = spinner.getEditor();
@@ -267,17 +299,6 @@ public abstract class TextButtonTool extends DrawableButtonTool {
             super.switchToolOptions(items, newID);
         }
 
-        Node getWidthSpinner () {
-            return (((HBox) getOptions().getNodes(getId()).get("width_box")).getChildren().get(1));
-        }
-
-        Node getHeightSpinner () {
-            return (((HBox) getOptions().getNodes(getId()).get("height_box")).getChildren().get(1));
-        }
-
-        Node getRotateSpinner() {
-            return (((HBox) getOptions().getNodes(getId()).get("rotation_box")).getChildren().get(1));
-        }
     }
 
 }
