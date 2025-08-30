@@ -21,6 +21,7 @@ public final class GlobalDrawPaneConfig {
     private Node selectedNode; // The one node on canvas that is active or currently selected.
     private static final GlobalDrawPaneConfig globalDrawPaneConfig = new GlobalDrawPaneConfig();
     private DrawPane.CanvasActionMode canvasActionMode;
+    private DrawPane drawingAreaContext;
 
     public void setForegroundColor(Paint foregroundColor){
         this.foregroundColor = foregroundColor;
@@ -81,4 +82,13 @@ public final class GlobalDrawPaneConfig {
     public DrawPane.CanvasActionMode getCanvasActionMode() {
         return canvasActionMode;
     }
+
+    public void setDrawingAreaContext(DrawPane drawingArea) {
+        this.drawingAreaContext = drawingArea;
+    }
+
+    public DrawPane getDrawingAreaContext() {
+        return drawingAreaContext;
+    }
+
 }

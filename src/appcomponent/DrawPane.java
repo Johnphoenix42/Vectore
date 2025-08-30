@@ -20,8 +20,8 @@ import java.util.Map;
 public class DrawPane extends StackPane {
 
     private final GlobalDrawPaneConfig drawAreaConfig;
-    private static Pane activeCanvasPane;
-    private Node activeCanvasNode = null;
+    private static Pane activeCanvasPane; // the active canvas we are using. This can change when we work with multiple tabs.
+    private Node activeCanvasNode = null; // the node on the canvas currently being manipulated
 
     public DrawPane(GlobalDrawPaneConfig config, double width, double height){
         super();
@@ -47,6 +47,31 @@ public class DrawPane extends StackPane {
         return canvasPane;
     }
 
+    public void foreignRender(Map<String, LinkedHashMap<String, Node>> nodeTree) {
+        LinkedHashMap<String, Node> primaryNodes = nodeTree.get(DrawableButtonTool.PRIMARY);
+        LinkedHashMap<String, Node> secondaryNodes = nodeTree.get(DrawableButtonTool.SECONDARY);
+
+        if(primaryNodes != null) {
+            for (Map.Entry<String, Node> nodeToAdd : primaryNodes.entrySet()) {
+                if (nodeToAdd == null) continue;
+                try {
+                    activeCanvasPane.getChildren().add(nodeToAdd.getValue());
+                } catch (IllegalArgumentException exception) {
+                    System.err.println(">> Render error: You are attempting to render "+ nodeToAdd.getValue() + " twice.");
+                }
+            }
+        }
+        if(secondaryNodes == null) return;
+        for (Map.Entry<String, Node> nodeToAdd : secondaryNodes.entrySet()) {
+            if (nodeToAdd == null || nodeToAdd.getValue() == null) continue;
+            try {
+                activeCanvasPane.getChildren().add(nodeToAdd.getValue());
+            } catch (IllegalArgumentException exception) {
+                System.err.println(">> Render error: You are attempting to render "+ nodeToAdd.getValue() + " twice.");
+            }
+        }
+    }
+
     private <T extends InputEvent> void renderNodes(Pane canvasPane, EventType<T> type, T event){
         Map<String, LinkedHashMap<String, Node>> nodeTree = drawAreaConfig.getCurrentTool().draw(type, event);
         if(nodeTree != null) {
@@ -64,7 +89,11 @@ public class DrawPane extends StackPane {
             for (Map.Entry<String, Node> nodeToAdd : secondaryNodes.entrySet()) {
                 if (nodeToAdd == null || nodeToAdd.getValue() == null) continue;
                 //nodeToAdd.getValue().setClip(clipRect);
-                canvasPane.getChildren().add(nodeToAdd.getValue());
+                try {
+                    canvasPane.getChildren().add(nodeToAdd.getValue());
+                } catch (IllegalArgumentException exception) {
+                    System.err.println(">> Render error: You are attempting to render "+ nodeToAdd.getValue() + " twice.");
+                }
             }
         }
     }

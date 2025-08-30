@@ -1,5 +1,6 @@
 package appcustomcontrol;
 
+import appcomponent.SubToolsPanel;
 import apputil.GlobalDrawPaneConfig;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -11,6 +12,7 @@ import javafx.scene.paint.Color;
 public abstract class ToolbarButton extends Button {
 
     protected final GlobalDrawPaneConfig config;
+    protected final SubToolsPanel toolOptionsPanel;
     private boolean persistentlySelectable = false;
     public static final double BUTTON_WIDTH = 40;
     public static final double BUTTON_HEIGHT = 40;
@@ -18,9 +20,10 @@ public abstract class ToolbarButton extends Button {
     public static final double BUTTON_CORNER_RADII = 5;
     public static final double BUTTON_INSETS = 5;
 
-    public ToolbarButton(String name, GlobalDrawPaneConfig config){
+    public ToolbarButton(String name, GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel){
         super(name);
         this.config = config;
+        this.toolOptionsPanel = toolOptionsPanel;
         setId(name);
         setPrefSize(BUTTON_WIDTH, BUTTON_HEIGHT);
         setBackground(new Background(new BackgroundFill(
@@ -47,7 +50,7 @@ public abstract class ToolbarButton extends Button {
         this.persistentlySelectable = persistentlySelectable;
     }
 
-    private void onButtonClick(){
+    void onButtonClick(){
         DrawableButtonTool prevSelectedButton = config.getCurrentTool();
         config.setPreviousTool(prevSelectedButton);
         if (prevSelectedButton != null){

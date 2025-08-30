@@ -1,6 +1,7 @@
 package appcustomcontrol;
 
 import appcomponent.DrawPane;
+import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
@@ -20,7 +21,7 @@ import javafx.scene.shape.*;
 import javax.vecmath.Vector2d;
 import java.util.*;
 
-public abstract class PathButtonTool extends DrawableButtonTool {
+public class PathButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "path_";
 
@@ -43,8 +44,8 @@ public abstract class PathButtonTool extends DrawableButtonTool {
     private boolean isLastPathElementRemoved = false;
     private boolean skipDrawBreakpoint = false;
 
-    public PathButtonTool(GlobalDrawPaneConfig config) {
-        super("Path", config);
+    public PathButtonTool(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
+        super("Path", config, toolOptionsPanel);
         optionButtonsBuilder = new PathOptions(config);
         nodeTree = new TreeMap<>();
         nodeTree.put(PRIMARY, new LinkedHashMap<>());
@@ -465,6 +466,11 @@ public abstract class PathButtonTool extends DrawableButtonTool {
             controlPointEvent.consume();
         });
         return controlPoint;
+    }
+
+    @Override
+    public void setCurrentToolbarOptions(DrawableButtonTool tool) {
+        getOptions().switchToolOptions(toolOptionsPanel.getItems(), getId());
     }
 
     public final class PathOptions extends OptionButtonsBuilder{
