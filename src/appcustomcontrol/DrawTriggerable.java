@@ -16,8 +16,24 @@ import java.util.TreeMap;
  */
 public interface DrawTriggerable {
 
+    /**
+     * Implement this method if you want your class to be able to draw on the canvas. What is to be drawn is specified
+     * in renderTree, a map object that will be created in the method locally
+     * @param eventType
+     * @param ev
+     * @return
+     * @param <T>
+     */
     <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> draw(EventType<T> eventType, T ev);
 
+    /**
+     * Implement this method if you want your class to be able to unDraw (clear a node) on the canvas.
+     * What is to be unDrawn is specified in renderTree, a map object that will be created in the method locally
+     * @param eventType
+     * @param ev
+     * @return
+     * @param <T>
+     */
     <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T ev);
 
 }

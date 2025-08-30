@@ -45,6 +45,9 @@ public class GraphicsApp extends Application {
         SubToolsPanel toolOptionsPanel = new SubToolsPanel();
         ToolsPanel sideToolsPanel = new ToolsPanel(drawPaneConfig, toolOptionsPanel);
         DrawPane drawingArea = new DrawPane(drawPaneConfig, WIDTH, HEIGHT);
+        drawingArea.setFocusTraversable(true);
+        sideToolsPanel.setDrawPane(drawingArea);
+        sideToolsPanel.setFocusTraversable(true);
         menuBar.getConsumer().setDrawPane(drawingArea);
 
         /*scene.widthProperty().addListener((observable, oldValue, newValue) -> {

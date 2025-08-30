@@ -24,4 +24,8 @@ public class NewProjectModelConsumer implements Consumer<AppMenuBar.NewProjectMo
     public void setDrawPane(DrawPane drawingArea) {
         this.drawingArea = drawingArea;
     }
+
+    public DrawPane getDrawPane() {
+        return drawingArea;
+    }
 }

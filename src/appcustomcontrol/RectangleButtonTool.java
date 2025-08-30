@@ -1,6 +1,7 @@
 package appcustomcontrol;
 
 import appcomponent.DrawPane;
+import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
@@ -21,12 +22,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.text.Text;
-import javafx.util.StringConverter;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class RectangleButtonTool extends DrawableButtonTool {
+public class RectangleButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "rectangle_";
     private final RectangleOptions optionButtonsBuilder;
@@ -36,8 +35,8 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
     private double rectBottomPointX = 0, rectBottomPointY = 0;
     private int shapeCounter = 0;
 
-    public RectangleButtonTool(GlobalDrawPaneConfig config) {
-        super("Rect", config);
+    public RectangleButtonTool(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
+        super("Rect", config, toolOptionsPanel);
         optionButtonsBuilder = new RectangleOptions(config);
         nodeTree.put(PRIMARY, new LinkedHashMap<>());
         nodeTree.put(SECONDARY, new LinkedHashMap<>());
@@ -210,6 +209,11 @@ public abstract class RectangleButtonTool extends DrawableButtonTool {
     @Override
     public RectangleOptions getOptions() {
         return optionButtonsBuilder;
+    }
+
+    @Override
+    public void setCurrentToolbarOptions(DrawableButtonTool tool) {
+        getOptions().switchToolOptions(toolOptionsPanel.getItems(), getId());
     }
 
     @Override

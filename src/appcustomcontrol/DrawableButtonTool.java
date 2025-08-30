@@ -1,5 +1,6 @@
 package appcustomcontrol;
 
+import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import com.sun.istack.internal.NotNull;
@@ -28,8 +29,8 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
     TreeMap<String, LinkedHashMap<String, Node>> nodeTree = new TreeMap<>();
     protected OptionButtonsBuilder optionButtonsBuilder;
 
-    public DrawableButtonTool(String label, GlobalDrawPaneConfig config) {
-        super(label, config);
+    public DrawableButtonTool(String label, GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
+        super(label, config, toolOptionsPanel);
         optionButtonsBuilder = new OptionButtonsBuilder(config);
         setPersistentlySelectable(true);
         Color hoverColor = Color.BLUE;

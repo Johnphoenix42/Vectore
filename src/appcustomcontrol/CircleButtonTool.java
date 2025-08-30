@@ -1,6 +1,7 @@
 package appcustomcontrol;
 
 import appcomponent.DrawPane;
+import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import javafx.event.EventHandler;
@@ -27,7 +28,7 @@ import javafx.util.StringConverter;
 import javax.vecmath.Vector2d;
 import java.util.*;
 
-public abstract class CircleButtonTool extends DrawableButtonTool {
+public class CircleButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "circle_";
     CircleOptions optionButtonsBuilder;
@@ -37,8 +38,8 @@ public abstract class CircleButtonTool extends DrawableButtonTool {
     private int shapeCounter = 0;
     Vector2d radiusVector;
 
-    public CircleButtonTool(GlobalDrawPaneConfig config) {
-        super("Circle", config);
+    public CircleButtonTool(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
+        super("Circle", config, toolOptionsPanel);
         optionButtonsBuilder = new CircleOptions(config);
         nodeTree.put(PRIMARY, new LinkedHashMap<>());
         nodeTree.put(SECONDARY, new LinkedHashMap<>());
@@ -166,6 +167,11 @@ public abstract class CircleButtonTool extends DrawableButtonTool {
     @Override
     public <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
         return null;
+    }
+
+    @Override
+    public void setCurrentToolbarOptions(DrawableButtonTool tool) {
+        getOptions().switchToolOptions(toolOptionsPanel.getItems(), getId());
     }
 
     @Override

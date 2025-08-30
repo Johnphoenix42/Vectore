@@ -12,6 +12,7 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Polygon;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -20,7 +21,7 @@ import java.util.Map;
 public class ToolsPanel extends ToolBar {
 
     private final GlobalDrawPaneConfig config;
-    private final SubToolsPanel toolOptionsPanel;
+    protected final SubToolsPanel toolOptionsPanel;
     DrawableButtonTool.OptionButtonsBuilder optionButtonsBuilder;
 
     public ToolsPanel(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel){
@@ -28,44 +29,22 @@ public class ToolsPanel extends ToolBar {
         this.toolOptionsPanel = toolOptionsPanel;
         this.config = config;
         autosize();
-        addButtons();
+        addButtons(toolOptionsPanel);
         setOrientation(Orientation.VERTICAL);
         setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
     }
 
-    private void addButtons(){
+    private void addButtons(SubToolsPanel toolOptionsPanel){
         ObservableList<Node> items = toolOptionsPanel.getItems();
-        RectangleButtonTool rectangleButton = new RectangleButtonTool(config) {
-            @Override
-            public void setCurrentToolbarOptions(DrawableButtonTool tool) {
-                optionButtonsBuilder = tool.getOptions();
-                optionButtonsBuilder.switchToolOptions(items, getId());
-            }
-        };
+        RectangleButtonTool rectangleButton = new RectangleButtonTool(config, toolOptionsPanel);
+        //rectangleButton.setShape(new Polygon(5, 8, 12, 20, 13, 6));
+        //rectangleButton.setStyle("-fx-");
 
-        CircleButtonTool circleButton = new CircleButtonTool(config) {
-            @Override
-            public void setCurrentToolbarOptions(DrawableButtonTool tool) {
-                optionButtonsBuilder = this.getOptions();
-                getOptions().switchToolOptions(items, getId());
-            }
-        };
+        CircleButtonTool circleButton = new CircleButtonTool(config, toolOptionsPanel);
 
-        PathButtonTool pathButton = new PathButtonTool(config) {
-            @Override
-            public void setCurrentToolbarOptions(DrawableButtonTool tool) {
-                optionButtonsBuilder = tool.getOptions();
-                optionButtonsBuilder.switchToolOptions(items, getId());
-            }
-        };
+        PathButtonTool pathButton = new PathButtonTool(config, toolOptionsPanel);
 
-        TextButtonTool textButton = new TextButtonTool(config) {
-            @Override
-            public void setCurrentToolbarOptions(DrawableButtonTool tool) {
-                optionButtonsBuilder = tool.getOptions();
-                optionButtonsBuilder.switchToolOptions(items, getId());
-            }
-        };
+        TextButtonTool textButton = new TextButtonTool(config, toolOptionsPanel);
         /*items.addAll(optionButtonsBuilder.getNodes(pathButton.getId()));*/
         setInitialSelectedTool(rectangleButton, items);
 
@@ -97,6 +76,10 @@ public class ToolsPanel extends ToolBar {
         items.addAll(temp);
         button.setAsCurrentlySelectedTool();
         optionButtonsBuilder.switchToolOptions(items, button.getId());
+    }
+
+    public void setDrawPane(DrawPane drawingArea) {
+        config.setDrawingAreaContext(drawingArea);
     }
 
     class ButtonTool<T extends DrawableButtonTool> {
