@@ -10,11 +10,11 @@ import javafx.event.EventType;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 
@@ -131,7 +131,7 @@ public class PathButtonTool extends DrawableButtonTool {
 
         renderTree.get(SECONDARY).putAll(breakPointsMap);
         breakPointsMap.clear();
-        DrawPane.removeSecondaryNodeFromShapes(renderTree);
+        config.getDrawingAreaContext().removeSecondaryNodeFromShapes(renderTree);
         config.setSelectedNode(activePath);
     }
 
@@ -405,8 +405,9 @@ public class PathButtonTool extends DrawableButtonTool {
         Circle controlPoint = new Circle(3);
         controlPoint.setCenterX(Math.max(0, quadCurveTo.getControlX()));
         controlPoint.setCenterY(Math.max(0, quadCurveTo.getControlY()));
-        controlPoint.setCenterX(Math.min(DrawPane.getPane().getWidth(), quadCurveTo.getControlX()));
-        controlPoint.setCenterY(Math.min(DrawPane.getPane().getHeight(), quadCurveTo.getControlY()));
+        Pane currentCanvas = config.getDrawingAreaContext().getCanvas();
+        controlPoint.setCenterX(Math.min(currentCanvas.getWidth(), quadCurveTo.getControlX()));
+        controlPoint.setCenterY(Math.min(currentCanvas.getHeight(), quadCurveTo.getControlY()));
 
         controlPoint.setOnMousePressed(Event::consume);
         controlPoint.setOnMouseMoved(Event::consume);
@@ -430,8 +431,9 @@ public class PathButtonTool extends DrawableButtonTool {
         Circle controlPoint = new Circle(3);
         controlPoint.setCenterX(Math.max(0, p.getX()));
         controlPoint.setCenterY(Math.max(0, p.getY()));
-        controlPoint.setCenterX(Math.min(DrawPane.getPane().getWidth(), p.getX()));
-        controlPoint.setCenterY(Math.min(DrawPane.getPane().getHeight(), p.getY()));
+        Pane currentCanvas = config.getDrawingAreaContext().getCanvas();
+        controlPoint.setCenterX(Math.min(currentCanvas.getWidth(), p.getX()));
+        controlPoint.setCenterY(Math.min(currentCanvas.getHeight(), p.getY()));
 
         controlPoint.setOnMousePressed(Event::consume);
         controlPoint.setOnMouseMoved(Event::consume);
@@ -451,8 +453,9 @@ public class PathButtonTool extends DrawableButtonTool {
         Circle controlPoint = new Circle(3);
         controlPoint.setCenterX(Math.max(0, arcTo.getRadiusX()));
         controlPoint.setCenterY(Math.max(0, arcTo.getRadiusY()));
-        controlPoint.setCenterX(Math.min(DrawPane.getPane().getWidth(), arcTo.getRadiusX()));
-        controlPoint.setCenterY(Math.min(DrawPane.getPane().getHeight(), arcTo.getRadiusY()));
+        Pane currentCanvas = config.getDrawingAreaContext().getCanvas();
+        controlPoint.setCenterX(Math.min(currentCanvas.getWidth(), arcTo.getRadiusX()));
+        controlPoint.setCenterY(Math.min(currentCanvas.getHeight(), arcTo.getRadiusY()));
 
         controlPoint.setOnMousePressed(Event::consume);
         controlPoint.setOnMouseMoved(Event::consume);

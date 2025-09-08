@@ -184,7 +184,7 @@ public class CircleButtonTool extends DrawableButtonTool {
 
         renderTree.get(SECONDARY).putAll(anchorsMap);
         anchorsMap.clear();
-        DrawPane.removeSecondaryNodeFromShapes(renderTree);
+        config.getDrawingAreaContext().removeSecondaryNodeFromShapes(renderTree);
         config.setSelectedNode(activeCircle);
     }
 
