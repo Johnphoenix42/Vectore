@@ -36,6 +36,7 @@ public class TextButtonTool extends DrawableButtonTool {
     private final TextOptions optionButtonsBuilder;
     private Rectangle activeTextBounds = null;
     private Text activeText = null;
+    private Font currentFont = Font.getDefault();
     private final Circle[] anchors = new Circle[2];
     private double mouseStartPointX = 0, mouseStartPointY = 0;
     private int shapeCounter = 0;
@@ -149,7 +150,7 @@ public class TextButtonTool extends DrawableButtonTool {
         }
     }
     private Circle createAnchorPoint(double x, double y, int anchorCounter, Map<String, LinkedHashMap<String, Node>> renderTree) {
-        Circle anchor = (Circle) nodeTree.get(SECONDARY).getOrDefault("point_" + 0 + "_" + anchorCounter, new Circle(x, y, config.getStrokeWidth()+4));
+        Circle anchor = (Circle) nodeTree.get(SECONDARY).getOrDefault("point_" + 0 + "_" + anchorCounter, new Circle(x, y, config.getStrokeWidth()+5));
         anchor.setCenterX(x);
         anchor.setCenterY(y);
         anchor.setFill(Color.TRANSPARENT);
@@ -209,11 +210,13 @@ public class TextButtonTool extends DrawableButtonTool {
             if (activeTextBounds.getWidth() < 5 && activeTextBounds.getHeight() < 5) {
                 activeTextBounds.setWidth(30);
                 activeTextBounds.setHeight(fontSizeSpinner.getValue() + 10);
+                anchors[1].setCenterX(activeTextBounds.getX() + activeTextBounds.getWidth());
+                anchors[1].setCenterY(activeTextBounds.getY() + activeTextBounds.getHeight());
             }
             Text text = new Text();
             text.setX(activeTextBounds.getX());
             text.setY(activeTextBounds.getY() + text.getFont().getSize());
-            text.setFont(Font.font(fontSizeSpinner.getValue()));
+            text.setFont(currentFont);
             activeText = text;
             activeText.setWrappingWidth(activeTextBounds.getWidth());
             config.setSelectedNode(activeText);
@@ -233,6 +236,9 @@ public class TextButtonTool extends DrawableButtonTool {
                 anotherRenderTree.put(PRIMARY, new LinkedHashMap<>());
                 anotherRenderTree.put(SECONDARY, new LinkedHashMap<>());
 
+                textEvent.consume();
+                if(text == activeText) return;
+
                 onButtonClick();
                 resetSelectBoundParameter(text);
                 anotherRenderTree.get(SECONDARY).put(SHAPE_NAMESPACE + 0, activeTextBounds);
@@ -241,7 +247,6 @@ public class TextButtonTool extends DrawableButtonTool {
                 drawingArea.foreignRender(anotherRenderTree);
                 activeText = text;
                 config.setSelectedNode(text);
-                textEvent.consume();
             });
             text.setOnMouseReleased(MouseEvent::consume);
             if (isDrawing) isTextWriting = true; // if activeTextBounds is being redrawn, we enter this mode.
@@ -315,7 +320,8 @@ public class TextButtonTool extends DrawableButtonTool {
     public final class TextOptions extends OptionButtonsBuilder{
 
         ComboBox<String> fontComboBox;
-        Spinner<String> fontSizeSpinner;
+        Spinner<Double> fontSizeSpinner;
+        ToggleButton toggleButtonItalic;
 
         private TextOptions(GlobalDrawPaneConfig config){
             super(config);
@@ -324,12 +330,29 @@ public class TextButtonTool extends DrawableButtonTool {
             HBox fontBox = createFontToolEntry(fieldWidth);
 
             Separator separator = new Separator(Orientation.VERTICAL);
+            createFontPostureToggle();
 
             LinkedHashMap<String, Node> nodeList = nodeMap.getOrDefault(getId(), new LinkedHashMap<>());
             nodeList.put("font_box", fontBox);
             nodeList.put("font_size_box", fontSizeBox);
             nodeList.put("separator_1", separator);
+            nodeList.put("font_ita_posture_box", toggleButtonItalic);
             nodeMap.put(getId(), nodeList);
+        }
+
+        private void createFontPostureToggle () {
+            toggleButtonItalic = new ToggleButton("I");
+            Font toggleFont = Font.font("Georgia", FontPosture.ITALIC, 14);
+            toggleButtonItalic.setFont(toggleFont);
+            toggleButtonItalic.setOnAction(event -> {
+                if (toggleButtonItalic.isSelected()) {
+                    FontManager.posture = FontPosture.ITALIC;
+                } else {
+                    FontManager.posture = FontPosture.REGULAR;
+                }
+                currentFont = FontManager.recreateFont(currentFont, new FontManager(null, null, FontManager.posture, 0D));
+                activeText.setFont(currentFont);
+            });
         }
 
         private HBox createFieldToolEntry(Spinner<Double> numberSpinner, String labelString, double fieldWidth){
@@ -348,14 +371,14 @@ public class TextButtonTool extends DrawableButtonTool {
             ComboBox<String> fontComboBox = new ComboBox<>();
             fontComboBox.setFocusTraversable(false);
             fontComboBox.setPrefWidth(80);
-            fontComboBox.getItems().addAll(Font.getFontNames());
-            fontComboBox.getSelectionModel().select(Font.getDefault().getName());
+            fontComboBox.getItems().addAll(Font.getFamilies());
+            fontComboBox.getSelectionModel().select(Font.getDefault().getFamily());
             fontComboBox.setOnAction(event -> {
                 if (activeText == null) return;
-                String fontName = fontComboBox.getSelectionModel().getSelectedItem();
-                Font currentFont = activeText.getFont();
-                Font newFont = Font.font(fontName, FontWeight.LIGHT, FontPosture.REGULAR, currentFont.getSize());
-                activeText.setFont(newFont);
+                String fontFamily = fontComboBox.getSelectionModel().getSelectedItem();
+                currentFont = FontManager.recreateFont(currentFont, new FontManager(fontFamily, null, null, 0D));
+                activeText.setFont(currentFont);
+                System.out.println(currentFont);
             });
             this.fontComboBox = fontComboBox;
 
@@ -367,8 +390,10 @@ public class TextButtonTool extends DrawableButtonTool {
                 if(nodeTree.get(PRIMARY).isEmpty()) return;
 
                 try {
-                    Font defaultFont = Font.getDefault();
-                    activeText.setFont(Font.font(defaultFont.getName(), activeText.getFont().getSize()));
+                    // convert to double
+                    double value = Double.parseDouble(event.getText());
+                    currentFont = FontManager.recreateFont(currentFont, new FontManager(null, null, null, value));
+                    activeText.setFont(currentFont);
                 } catch (NumberFormatException ex) {
                     System.out.println(">>Number Format error");
                 }
@@ -379,29 +404,38 @@ public class TextButtonTool extends DrawableButtonTool {
 
         private HBox createFontSizeToolEntry(double fieldWidth){
             Spinner<Double> numberSpinner = new Spinner<>(-500, 500, 10, 1);
+            fontSizeSpinner = numberSpinner;
             HBox box = createFieldToolEntry(numberSpinner, "size", fieldWidth);
             EventHandler<KeyEvent> keyHandler = event -> {
                 if(nodeTree.get(PRIMARY).isEmpty()) return;
 
-                String value = sanitizeTextField(numberSpinner, event);
+                //Double value = numberSpinner.getValueFactory().getConverter().fromString(event.getText());
+                String value = sanitizeTextField(numberSpinner, event.getText());
                 try {
-                    activeText.setFont(Font.font(Double.parseDouble(value)));
+                    currentFont = FontManager.recreateFont(currentFont, new FontManager(null, null, null, Double.parseDouble(value)));
+                    activeText.setFont(currentFont);
                 } catch (NumberFormatException ex) {
                     System.out.println(">>Number Format error");
                 }
             };
             numberSpinner.getEditor().setOnKeyReleased(keyHandler);
             numberSpinner.setValueFactory(new DoubleSpinnerValueFactory(numberSpinner, (SpinnerValueFactory<Double> valueFactory) -> {
-                if (activeTextBounds == null) return;
-                activeText.setFont(Font.font(valueFactory.getValue()));
+                if (activeText == null) return;
+                currentFont = FontManager.recreateFont(currentFont, new FontManager(null, null, null, valueFactory.getValue()));
+                activeText.setFont(currentFont);
+                double currentY = activeText.getY();
+                if (DoubleSpinnerValueFactory.isIncremented()) {
+                    activeText.setY(currentY + 1);
+                } else {
+                    activeText.setY(currentY - 1);
+                }
             }));
             return box;
         }
 
-        private String sanitizeTextField(Spinner<Double> spinner, KeyEvent event){
+        private String sanitizeTextField(Spinner<Double> spinner, String inputtedCharacter){
             TextField textField = spinner.getEditor();
             String textInput = textField.getText();
-            String inputtedCharacter = event.getText();
             if(inputtedCharacter.matches("\\D")) {
                 textField.setText(textInput.split(inputtedCharacter)[0]);
                 textField.positionCaret(4);
@@ -416,7 +450,7 @@ public class TextButtonTool extends DrawableButtonTool {
         }
 
         Spinner<Double> getFontSizeSpinner () {
-            return (Spinner<Double>) ((HBox) getNodes(getId()).get("font_size_box")).getChildren().get(1);
+            return fontSizeSpinner;
         }
 
     }

@@ -30,6 +30,7 @@ public class RectangleButtonTool extends DrawableButtonTool {
     public static final String SHAPE_NAMESPACE = "rectangle_";
     private final RectangleOptions optionButtonsBuilder;
     private Rectangle activeRectangle = null;
+    private final Circle[] anchors = new Circle[2];
     private boolean isDrawing = false;
     private double mouseStartPointX = 0, mouseStartPointY = 0;
     private double rectBottomPointX = 0, rectBottomPointY = 0;

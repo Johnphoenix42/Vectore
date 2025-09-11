@@ -7,6 +7,7 @@ import javafx.util.StringConverter;
 public class DoubleSpinnerValueFactory extends SpinnerValueFactory<Double> {
     private final Spinner<Double> numberSpinner;
     private final InDecrementListener<Double> inDecrementListener;
+    private static boolean isIncremented;
 
     public DoubleSpinnerValueFactory(Spinner<Double> numberSpinner, InDecrementListener<Double> inDecrementListener) {
         this.numberSpinner = numberSpinner;
@@ -23,6 +24,7 @@ public class DoubleSpinnerValueFactory extends SpinnerValueFactory<Double> {
         commitEditorText(valueFactory);
         Double oldValue = valueFactory.getValue();
         valueFactory.setValue((oldValue != null ? oldValue : 0) - steps);
+        isIncremented = false;
 
         inDecrementListener.onInDecrement(valueFactory);
     }
@@ -36,6 +38,7 @@ public class DoubleSpinnerValueFactory extends SpinnerValueFactory<Double> {
         commitEditorText(valueFactory);
         Double oldValue = valueFactory.getValue();
         valueFactory.setValue(steps + (oldValue != null ? oldValue : 0));
+        isIncremented = true;
 
         inDecrementListener.onInDecrement(valueFactory);
     }
@@ -48,5 +51,9 @@ public class DoubleSpinnerValueFactory extends SpinnerValueFactory<Double> {
             Double value = converter.fromString(text);
             valueFactory.setValue(value);
         }
+    }
+
+    static boolean isIncremented() {
+        return isIncremented;
     }
 }
