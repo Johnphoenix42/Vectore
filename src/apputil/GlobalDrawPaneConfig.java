@@ -22,6 +22,7 @@ public final class GlobalDrawPaneConfig {
     private static final GlobalDrawPaneConfig globalDrawPaneConfig = new GlobalDrawPaneConfig();
     private DrawPane.CanvasActionMode canvasActionMode;
     private DrawPane drawingAreaContext;
+    private Paint strokeColor = Color.BLACK;
 
     public void setForegroundColor(Paint foregroundColor){
         this.foregroundColor = foregroundColor;
@@ -91,4 +92,11 @@ public final class GlobalDrawPaneConfig {
         return drawingAreaContext;
     }
 
+    public Paint getStrokeColor() {
+        return this.strokeColor;
+    }
+
+    public void setStrokeColor(Paint strokeColor) {
+        this.strokeColor = strokeColor;
+    }
 }

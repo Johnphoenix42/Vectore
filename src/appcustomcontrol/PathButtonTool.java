@@ -152,11 +152,10 @@ public class PathButtonTool extends DrawableButtonTool {
             pathShape.setTranslateY(0);
             ObservableList<PathElement> pathElements = pathShape.getElements();
             pathElements.add(new MoveTo(x, y));
-            LinkedHashMap<String, Node> staticGlobalOptions = optionButtonsBuilder.getNodes(OptionButtonsBuilder.GLOBAL_NODE_OPTIONS);
-            boolean shouldFill = ((ToggleButton) staticGlobalOptions.get("fill_toggle_button")).isSelected();
+            boolean shouldFill = optionButtonsBuilder.fillColorToggleButton.isSelected();
             pathShape.setFill(shouldFill ? config.getForegroundColor() : null);
-            boolean shouldStroke = ((ToggleButton) staticGlobalOptions.get("stroke_toggle_button")).isSelected();
-            pathShape.setStroke(shouldStroke ? config.getForegroundColor(): null);
+            boolean shouldStroke = optionButtonsBuilder.strokeColorToggleButton.isSelected();
+            pathShape.setStroke(shouldStroke ? config.getStrokeColor(): null);
             pathShape.setStrokeWidth(config.getStrokeWidth());
             activePath = pathShape;
             nodeMap.put(SHAPE_NAMESPACE + shapeCounter, pathShape);
@@ -497,22 +496,8 @@ public class PathButtonTool extends DrawableButtonTool {
                 config.setCurveType(selectedItem);
             });
 
-            /*ToggleButton strokeToggleButton = new ToggleButton("Stroke");
-            strokeToggleButton.setOnAction(event -> {
-                if (activePath == null) return;
-                if (strokeToggleButton.isSelected()){
-                    activePath.setStroke(config.getForegroundColor());
-                }else{
-                    activePath.setStroke(null);
-                }
-            });*/
-            // ToggleGroup toggleGroup = new ToggleGroup();
-
-            // fillToggleButton.setToggleGroup(toggleGroup);
-
             LinkedHashMap<String, Node> nodeList = nodeMap.getOrDefault(getId(), new LinkedHashMap<>());
             nodeList.put("curve_type", curveType);
-            //nodeList.put("stroke_toggle_button", strokeToggleButton);
             return nodeList;
         }
 

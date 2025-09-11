@@ -26,7 +26,7 @@ public class DrawPane extends StackPane {
     public DrawPane(GlobalDrawPaneConfig config, double width, double height){
         super();
         drawAreaConfig = config;
-        setBackground(new Background(new BackgroundFill(Color.WHEAT, null, null)));
+        setBackground(new Background(new BackgroundFill(Color.grayRgb(50), null, null)));
         setMaxSize(width, height);
         setMinSize(600, 600);
         autosize();
