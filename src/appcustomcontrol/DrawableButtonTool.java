@@ -8,9 +8,7 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
-import javafx.scene.control.ColorPicker;
-import javafx.scene.control.Separator;
-import javafx.scene.control.ToggleButton;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -71,54 +69,106 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
         protected LinkedHashMap<String, LinkedHashMap<String, Node>> nodeMap;
         private final GlobalDrawPaneConfig config;
 
+        ColorPicker colorPicker;
+        ColorPicker strokeColorPicker;
+        ToggleButton fillColorToggleButton;
+        ToggleButton fillGradientToggleButton;
+        ToggleButton fillPatternToggleButton;
+        ToggleButton strokeColorToggleButton;
+        ToggleButton strokeGradientToggleButton;
+        ToggleButton strokePatternToggleButton;
+
         OptionButtonsBuilder(GlobalDrawPaneConfig config){
             this.config = config;
-            ColorPicker colorPicker = new ColorPicker(Color.BLACK);
-            colorPicker.setPrefSize(BUTTON_WIDTH, 30);
-            ToggleButton fillToggleButton = new ToggleButton("Fill");
-            ToggleButton strokeToggleButton = new ToggleButton("Stroke");
-            strokeToggleButton.setSelected(true);
-
+            ToggleGroup toggleGroup = new ToggleGroup();
+            createFillButtons(toggleGroup);
+            createStrokeButtons(toggleGroup);
             Separator separator = new Separator(Orientation.VERTICAL);
 
             nodeMap = new LinkedHashMap<>();
             LinkedHashMap<String, Node> toolsMap = new LinkedHashMap<>();
-            toolsMap.put("color_picker", colorPicker);
-            toolsMap.put("fill_toggle_button", fillToggleButton);
-            toolsMap.put("stroke_toggle_button", strokeToggleButton);
+
+            toolsMap.put("fill_stroke_grid", createGridAndFill());
             toolsMap.put("separator", separator);
             nodeMap.put(GLOBAL_NODE_OPTIONS, toolsMap);
 
             colorPicker.setOnAction(event -> {
-                this.setColorPickerOnAction(colorPicker, (ToggleButton) toolsMap.get("fill_toggle_button"));
+                config.setForegroundColor(colorPicker.getValue());
+                this.setColorPickerOnAction(fillColorToggleButton);
             });
-            fillToggleButton.setOnAction(event -> {
-                this.setColorPickerOnAction(colorPicker, (ToggleButton) event.getSource());
+            strokeColorPicker.setOnAction(event -> {
+                config.setStrokeColor(strokeColorPicker.getValue());
+                this.setColorPickerOnAction(strokeColorToggleButton);
             });
-            strokeToggleButton.setOnAction(event -> {
-                this.setColorPickerOnAction(colorPicker, (ToggleButton) event.getSource());
+        }
+
+        private void createFillButtons (ToggleGroup toggleGroup) {
+            colorPicker = new ColorPicker(Color.BLACK);
+            colorPicker.setPrefSize(BUTTON_WIDTH, 30);
+            fillColorToggleButton = new ToggleButton("Co");
+            fillGradientToggleButton = new ToggleButton("Gr");
+            fillPatternToggleButton = new ToggleButton("Pa");
+
+            fillColorToggleButton.setToggleGroup(toggleGroup);
+            fillColorToggleButton.setUserData(colorPicker);
+            fillColorToggleButton.setOnAction(event -> {
+                if (fillColorToggleButton.isSelected()) {
+                    colorPicker.setDisable(false);
+                    colorPicker.show();
+                } else colorPicker.setDisable(true);
             });
+            fillGradientToggleButton.setToggleGroup(toggleGroup);
+            fillPatternToggleButton.setToggleGroup(toggleGroup);
+        }
+
+        private void createStrokeButtons (ToggleGroup toggleGroup) {
+            strokeColorPicker = new ColorPicker(Color.BLACK);
+            strokeColorPicker.setPrefSize(BUTTON_WIDTH, 30);
+            strokeColorToggleButton = new ToggleButton("Co");
+            strokeColorToggleButton.setSelected(true);
+            strokeGradientToggleButton = new ToggleButton("Gr");
+            strokePatternToggleButton = new ToggleButton("Pa");
+
+            strokeColorToggleButton.setToggleGroup(toggleGroup);
+            strokeColorToggleButton.setUserData(strokeColorPicker);
+            strokeColorToggleButton.setOnAction(event -> {
+                if (strokeColorToggleButton.isSelected()) {
+                    colorPicker.setDisable(false);
+                    strokeColorPicker.show();
+                } else colorPicker.setDisable(true);
+            });
+            strokeGradientToggleButton.setToggleGroup(toggleGroup);
+            strokePatternToggleButton.setToggleGroup(toggleGroup);
+        }
+
+        private GridPane createGridAndFill () {
+            GridPane fillStrokeGrid = new GridPane();
+            fillStrokeGrid.add(new Label("Fill"), 0, 0);
+            fillStrokeGrid.add(colorPicker, 1, 0);
+            fillStrokeGrid.add(fillColorToggleButton, 2, 0);
+            fillStrokeGrid.add(fillGradientToggleButton, 3, 0);
+            fillStrokeGrid.add(fillPatternToggleButton, 4, 0);
+
+            fillStrokeGrid.add(new Label("Stroke"), 0, 1);
+            fillStrokeGrid.add(strokeColorPicker, 1, 1);
+            fillStrokeGrid.add(strokeColorToggleButton, 2, 1);
+            fillStrokeGrid.add(strokeGradientToggleButton, 3, 1);
+            fillStrokeGrid.add(strokePatternToggleButton, 4, 1);
+            return fillStrokeGrid;
         }
 
         /**
          * Applies selected color from a ColorPicker to a shape, using ToggleButton as a switch.
          * If no canvas shape is selected, nothing happens.
-         * @param colorPicker control used to select a color.
          * @param toggleButton control that will be used as the switch. When the toggle button is on, color is
          *                     added. When off, color is removed, i.e. shape is hollow, not filled with TRANSPARENT
          */
-        protected void setColorPickerOnAction(ColorPicker colorPicker, @NotNull ToggleButton toggleButton){
-            config.setForegroundColor(colorPicker.getValue());
+        protected void setColorPickerOnAction(@NotNull ToggleButton toggleButton){
             Shape canvasActiveNode = (Shape) config.getSelectedNode();
             if (canvasActiveNode == null) return;
-            LinkedHashMap<String, Node> toolsMap = getNodes(GLOBAL_NODE_OPTIONS);
-            if (toggleButton.isSelected()) {
-                if (toggleButton == toolsMap.get("fill_toggle_button")) canvasActiveNode.setFill(colorPicker.getValue());
-                else canvasActiveNode.setStroke(colorPicker.getValue());
-            } else {
-                if (toggleButton == toolsMap.get("fill_toggle_button")) canvasActiveNode.setFill(null);
-                else canvasActiveNode.setStroke(null);
-            }
+            ColorPicker picker = (ColorPicker) toggleButton.getUserData();
+            if (picker == this.colorPicker) canvasActiveNode.setFill(toggleButton.isSelected() ? picker.getValue() : null);
+            else canvasActiveNode.setStroke(toggleButton.isSelected() ? picker.getValue() : null);
         }
 
         public LinkedHashMap<String, Node> getNodes(String key) {

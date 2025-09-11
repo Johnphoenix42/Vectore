@@ -63,6 +63,7 @@ public class GraphicsApp extends Application {
         VBox rightSidePanel = new VBox(generateSvg, text);
         rightSidePanel.setPrefWidth(180);
         rightSidePanel.setMaxWidth(240);
+        rightSidePanel.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
 
         HBox hBox = new HBox();
         VBox drawAreaVBox = new VBox(toolOptionsPanel, drawingArea);

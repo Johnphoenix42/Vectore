@@ -69,11 +69,11 @@ public class CircleButtonTool extends DrawableButtonTool {
             circle.setTranslateX(Math.min(mouseStartPointX, ev.getX()));
             circle.setTranslateY(Math.min(mouseStartPointY, ev.getY()));
             LinkedHashMap<String, Node> staticGlobalOptions = optionButtonsBuilder.getNodes(OptionButtonsBuilder.GLOBAL_NODE_OPTIONS);
-            boolean shouldFill = ((ToggleButton) staticGlobalOptions.get("fill_toggle_button")).isSelected();
+            boolean shouldFill = optionButtonsBuilder.fillColorToggleButton.isSelected();
             circle.setFill(shouldFill ? config.getForegroundColor() : null);
             circle.setStrokeWidth(config.getStrokeWidth());
-            boolean shouldStroke = ((ToggleButton) staticGlobalOptions.get("stroke_toggle_button")).isSelected();
-            circle.setStroke(shouldStroke ? config.getForegroundColor() : null);
+            boolean shouldStroke = optionButtonsBuilder.strokeColorToggleButton.isSelected();
+            circle.setStroke(shouldStroke ? config.getStrokeColor() : null);
             activeCircle = circle;
 
             LinkedHashMap<String, Node> nodeMap = nodeTree.get(PRIMARY);
