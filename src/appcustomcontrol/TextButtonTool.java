@@ -18,14 +18,12 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
+import javafx.scene.text.*;
 
 import java.util.*;
 
@@ -217,6 +215,10 @@ public class TextButtonTool extends DrawableButtonTool {
             text.setX(activeTextBounds.getX());
             text.setY(activeTextBounds.getY() + text.getFont().getSize());
             text.setFont(currentFont);
+            boolean shouldFill = optionButtonsBuilder.fillColorToggleButton.isSelected();
+            text.setFill(shouldFill ? config.getForegroundColor() : null);
+            boolean shouldStroke = optionButtonsBuilder.strokeColorToggleButton.isSelected();
+            text.setStroke(shouldStroke ? config.getStrokeColor() : null);
             activeText = text;
             activeText.setWrappingWidth(activeTextBounds.getWidth());
             config.setSelectedNode(activeText);
@@ -326,15 +328,46 @@ public class TextButtonTool extends DrawableButtonTool {
         private TextOptions(GlobalDrawPaneConfig config){
             super(config);
             double fieldWidth = 20;
+            GridPane fontOptionsGrid = new GridPane();
             HBox fontSizeBox = createFontSizeToolEntry(fieldWidth);
             HBox fontBox = createFontToolEntry(fieldWidth);
+            fontOptionsGrid.add(fontSizeBox, 0, 0, 3, 1);
+            fontOptionsGrid.add(fontBox, 3, 0, 3, 1);
+
+            ToggleButton toggleButtonL = new ToggleButton("L");
+            toggleButtonL.setSelected(true);
+            toggleButtonL.setOnAction(event -> {
+                if(activeText != null) activeText.setTextAlignment(TextAlignment.LEFT);
+            });
+            ToggleButton toggleButtonC = new ToggleButton("C");
+            toggleButtonL.setOnAction(event -> {
+                if(activeText != null) activeText.setTextAlignment(TextAlignment.CENTER);
+            });
+            ToggleButton toggleButtonR = new ToggleButton("R");
+            toggleButtonL.setOnAction(event -> {
+                if(activeText != null) activeText.setTextAlignment(TextAlignment.RIGHT);
+            });
+            ToggleButton toggleButtonJ = new ToggleButton("J");
+            toggleButtonL.setOnAction(event -> {
+                if(activeText != null) activeText.setTextAlignment(TextAlignment.JUSTIFY);
+            });
+            ToggleGroup alignmentGroup = new ToggleGroup();
+            toggleButtonL.setToggleGroup(alignmentGroup);
+            toggleButtonC.setToggleGroup(alignmentGroup);
+            toggleButtonR.setToggleGroup(alignmentGroup);
+            toggleButtonJ.setToggleGroup(alignmentGroup);
+
+            fontOptionsGrid.add(toggleButtonL, 0, 1);
+            fontOptionsGrid.add(toggleButtonC, 1, 1);
+            fontOptionsGrid.add(toggleButtonR, 2, 1);
+            fontOptionsGrid.add(toggleButtonJ, 3, 1);
 
             Separator separator = new Separator(Orientation.VERTICAL);
             createFontPostureToggle();
 
             LinkedHashMap<String, Node> nodeList = nodeMap.getOrDefault(getId(), new LinkedHashMap<>());
-            nodeList.put("font_box", fontBox);
-            nodeList.put("font_size_box", fontSizeBox);
+            //nodeList.put("font_box", fontBox);
+            nodeList.put("font_options_grid", fontOptionsGrid);
             nodeList.put("separator_1", separator);
             nodeList.put("font_ita_posture_box", toggleButtonItalic);
             nodeMap.put(getId(), nodeList);
