@@ -4,6 +4,7 @@ import appcomponent.DrawPane;
 import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
+import apputil.Icon;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
@@ -24,7 +25,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.*;
-
 import java.util.*;
 
 public class TextButtonTool extends DrawableButtonTool {
@@ -42,7 +42,10 @@ public class TextButtonTool extends DrawableButtonTool {
     private TypeEventValue typeValueEnum;
 
     public TextButtonTool(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
-        super("Text", config, toolOptionsPanel);
+        super("", config, toolOptionsPanel);
+        Icon textToolSvgPath = Icon.TEXT_TOOL.resize(24);
+        setGraphic(textToolSvgPath.getSvgPath());
+        setTooltip(new Tooltip("Text"));
         optionButtonsBuilder = new TextOptions(config);
         nodeTree.put(PRIMARY, new LinkedHashMap<>());
         nodeTree.put(SECONDARY, new LinkedHashMap<>());
@@ -71,9 +74,6 @@ public class TextButtonTool extends DrawableButtonTool {
     private void drawOnKeyPressed(KeyEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
         int typeOrdinal = event.getCode().ordinal(); // 1 == backspace and 81 == delete
         // arrow keys <^>V - 16, 17, 18, 19
-        /*TypeEnum typeEnum = TypeEnum.FORWARD_NEGATIVE_TYPING;
-        typeEnum.setOrdinal(ordinal);
-        Optional<Integer> ordinalOptional = Optional.ofNullable(typeEnum.getOrdinal());*/
         switch (typeOrdinal) {
             case 1: typeValueEnum = TypeEventValue.BACKSPACE;
                 break;
@@ -176,8 +176,8 @@ public class TextButtonTool extends DrawableButtonTool {
             } else {
                 anchor.setCenterX(Math.max(eventX, activeTextBounds.getX()));
                 anchor.setCenterY(Math.max(eventY, activeTextBounds.getY()));
-                activeTextBounds.setWidth(Math.max(0, eventX - mouseStartPointX));
-                activeTextBounds.setHeight(Math.max(0, eventY - mouseStartPointY));
+                activeTextBounds.setWidth(anchor.getCenterX() - activeTextBounds.getX());
+                activeTextBounds.setHeight(anchor.getCenterY() - activeTextBounds.getY());
             }
             event.consume();
         });
@@ -258,6 +258,12 @@ public class TextButtonTool extends DrawableButtonTool {
         textSelectData.setBounds(selectX, selectY, activeTextBounds.getWidth(),
                 activeTextBounds.getHeight());
         activeText.setUserData(textSelectData);
+        //if (isDrawing) return;
+        anchors[0].setCenterX(activeTextBounds.getX());
+        anchors[0].setCenterY(activeTextBounds.getY());
+        anchors[1].setCenterX(activeTextBounds.getX() + activeTextBounds.getWidth());
+        anchors[1].setCenterY(activeTextBounds.getY() + activeTextBounds.getHeight());
+
         isDrawing = false;
     }
 
@@ -324,6 +330,7 @@ public class TextButtonTool extends DrawableButtonTool {
         ComboBox<String> fontComboBox;
         Spinner<Double> fontSizeSpinner;
         ToggleButton toggleButtonItalic;
+        ComboBox<String> fontWeightBox;
 
         private TextOptions(GlobalDrawPaneConfig config){
             super(config);
@@ -331,23 +338,23 @@ public class TextButtonTool extends DrawableButtonTool {
             GridPane fontOptionsGrid = new GridPane();
             HBox fontSizeBox = createFontSizeToolEntry(fieldWidth);
             HBox fontBox = createFontToolEntry(fieldWidth);
-            fontOptionsGrid.add(fontSizeBox, 0, 0, 3, 1);
-            fontOptionsGrid.add(fontBox, 3, 0, 3, 1);
+            fontOptionsGrid.add(fontSizeBox, 0, 0, 4, 1);
+            fontOptionsGrid.add(fontBox, 4, 0, 4, 1);
 
-            ToggleButton toggleButtonL = new ToggleButton("L");
+            ToggleButton toggleButtonL = new ToggleButton("", Icon.ALIGN_LEFT.getSvgPath());
             toggleButtonL.setSelected(true);
             toggleButtonL.setOnAction(event -> {
                 if(activeText != null) activeText.setTextAlignment(TextAlignment.LEFT);
             });
-            ToggleButton toggleButtonC = new ToggleButton("C");
+            ToggleButton toggleButtonC = new ToggleButton("", Icon.ALIGN_CENTER.getSvgPath());
             toggleButtonL.setOnAction(event -> {
                 if(activeText != null) activeText.setTextAlignment(TextAlignment.CENTER);
             });
-            ToggleButton toggleButtonR = new ToggleButton("R");
+            ToggleButton toggleButtonR = new ToggleButton("", Icon.ALIGN_RIGHT.getSvgPath());
             toggleButtonL.setOnAction(event -> {
                 if(activeText != null) activeText.setTextAlignment(TextAlignment.RIGHT);
             });
-            ToggleButton toggleButtonJ = new ToggleButton("J");
+            ToggleButton toggleButtonJ = new ToggleButton("", Icon.ALIGN_JUSTIFY.getSvgPath());
             toggleButtonL.setOnAction(event -> {
                 if(activeText != null) activeText.setTextAlignment(TextAlignment.JUSTIFY);
             });
@@ -411,7 +418,6 @@ public class TextButtonTool extends DrawableButtonTool {
                 String fontFamily = fontComboBox.getSelectionModel().getSelectedItem();
                 currentFont = FontManager.recreateFont(currentFont, new FontManager(fontFamily, null, null, 0D));
                 activeText.setFont(currentFont);
-                System.out.println(currentFont);
             });
             this.fontComboBox = fontComboBox;
 
@@ -423,7 +429,6 @@ public class TextButtonTool extends DrawableButtonTool {
                 if(nodeTree.get(PRIMARY).isEmpty()) return;
 
                 try {
-                    // convert to double
                     double value = Double.parseDouble(event.getText());
                     currentFont = FontManager.recreateFont(currentFont, new FontManager(null, null, null, value));
                     activeText.setFont(currentFont);

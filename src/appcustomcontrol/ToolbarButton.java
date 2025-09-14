@@ -31,7 +31,7 @@ public abstract class ToolbarButton extends Button {
                 new CornerRadii(BUTTON_CORNER_RADII),
                 new Insets(BUTTON_INSETS)
         )));
-        setTextFill(Color.BLACK);
+        setTextFill(Color.grayRgb(50));
         setOnMouseClicked(event -> onButtonClick());
     }
 
@@ -61,7 +61,7 @@ public abstract class ToolbarButton extends Button {
             prevSelectedButton.setTextFill(Color.BLACK);
         }
         setBackground(new Background((new BackgroundFill(
-                Color.BLACK, new CornerRadii(5), new Insets(5)))));
+                Color.grayRgb(50), new CornerRadii(5), new Insets(5)))));
         setTextFill(Color.WHITE);
         addClickListener(prevSelectedButton);
     }

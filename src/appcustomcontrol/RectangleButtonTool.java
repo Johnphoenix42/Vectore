@@ -1,9 +1,9 @@
 package appcustomcontrol;
 
-import appcomponent.DrawPane;
 import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
+import apputil.Icon;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
@@ -37,7 +37,10 @@ public class RectangleButtonTool extends DrawableButtonTool {
     private int shapeCounter = 0;
 
     public RectangleButtonTool(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
-        super("Rect", config, toolOptionsPanel);
+        super("", config, toolOptionsPanel);
+        Icon textToolSvgPath = Icon.RECTANGLE_TOOL;
+        setGraphic(textToolSvgPath.getSvgPath());
+        setTooltip(new Tooltip("Rectangle"));
         optionButtonsBuilder = new RectangleOptions(config);
         nodeTree.put(PRIMARY, new LinkedHashMap<>());
         nodeTree.put(SECONDARY, new LinkedHashMap<>());
@@ -88,8 +91,6 @@ public class RectangleButtonTool extends DrawableButtonTool {
             config.setSelectedNode(activeRectangle);
 
             anchors[0] = createAnchorPoint(ev.getX(), ev.getY(), 0, renderTree);
-            /*anchors[1] = createAnchorPoint(ev.getX() + activeRectangle.getWidth(),
-                    ev.getY() + activeRectangle.getHeight(), 1, renderTree);*/
         }else {
             activeRectangle.setX(Math.min(mouseStartPointX, ev.getX()));
             activeRectangle.setY(Math.min(mouseStartPointY, ev.getY()));
@@ -175,7 +176,6 @@ public class RectangleButtonTool extends DrawableButtonTool {
         anchor.setOnMouseReleased(event -> {
             mouseStartPointX = Math.min(activeRectangle.getX(), event.getX());
             mouseStartPointY = Math.min(activeRectangle.getY(), event.getY());
-            System.out.println(mouseStartPointX + ",  " + mouseStartPointY);
         });
         anchor.setOnMouseEntered(event -> anchor.setCursor(Cursor.CROSSHAIR));
         return anchor;
@@ -326,6 +326,8 @@ public class RectangleButtonTool extends DrawableButtonTool {
             numberSpinner.setValueFactory(new DoubleSpinnerValueFactory(numberSpinner, (SpinnerValueFactory<Double> valueFactory) -> {
                 if (activeRectangle == null) return;
                 activeRectangle.setRotate(valueFactory.getValue());
+                anchors[0].setCenterX(activeRectangle.getX());
+                anchors[0].setCenterY(activeRectangle.getY());
             }));
             return box;
         }

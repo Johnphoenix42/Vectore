@@ -16,6 +16,10 @@ import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * While every effort is made to accurately reflect the behavior of the program, Vectore is under continuous development and the code may have changed since the time of this writing.
  * Todo: Change the stroke toggle button to a Spinner that define the stroke-width with 0 as min and 10 as max.

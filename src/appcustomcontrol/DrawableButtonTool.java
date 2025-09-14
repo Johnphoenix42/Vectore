@@ -12,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.SVGPath;
 import javafx.scene.shape.Shape;
 
 import java.util.LinkedHashMap;
@@ -43,9 +44,10 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
         if(!isPersistentlySelectable()) return;
         config.setCurrentTool(this);
         AppLogger.log(getClass(), 31, "Current tool is " + config.getCurrentTool());
-        setBackground(new Background((new BackgroundFill(Color.BLACK,
+        setBackground(new Background((new BackgroundFill(Color.grayRgb(50),
                 new CornerRadii(5), new Insets(5)))));
         setTextFill(Color.WHITE);
+        //((SVGPath) getGraphic()).setFill(Color.WHITE);
     }
 
     @Override
@@ -77,6 +79,7 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
         ToggleButton strokeColorToggleButton;
         ToggleButton strokeGradientToggleButton;
         ToggleButton strokePatternToggleButton;
+        Spinner<Double> strokeWidthSpinner;
 
         OptionButtonsBuilder(GlobalDrawPaneConfig config){
             this.config = config;
@@ -154,6 +157,18 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             fillStrokeGrid.add(strokeColorToggleButton, 2, 1);
             fillStrokeGrid.add(strokeGradientToggleButton, 3, 1);
             fillStrokeGrid.add(strokePatternToggleButton, 4, 1);
+
+            strokeWidthSpinner = new Spinner<>(0, 10, 1.0, 1);
+            strokeWidthSpinner.getStyleClass().add(Spinner.STYLE_CLASS_SPLIT_ARROWS_VERTICAL);
+            strokeWidthSpinner.setEditable(true);
+            strokeWidthSpinner.setPrefWidth(20);
+            strokeWidthSpinner.setValueFactory(new DoubleSpinnerValueFactory(strokeWidthSpinner, valueFactory -> {
+                if (config.getSelectedNode() == null) return;
+                ((Shape) config.getSelectedNode()).setStrokeWidth(valueFactory.getValue());
+            }));
+            strokeWidthSpinner.getValueFactory().setValue(1.0);
+
+            fillStrokeGrid.add(strokeWidthSpinner, 5, 0, 1, 2);
             return fillStrokeGrid;
         }
 

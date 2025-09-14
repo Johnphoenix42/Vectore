@@ -4,6 +4,7 @@ import appcomponent.DrawPane;
 import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
+import apputil.Icon;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventType;
@@ -11,7 +12,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -45,7 +46,10 @@ public class PathButtonTool extends DrawableButtonTool {
     private boolean skipDrawBreakpoint = false;
 
     public PathButtonTool(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
-        super("Path", config, toolOptionsPanel);
+        super("", config, toolOptionsPanel);
+        Icon textToolSvgPath = Icon.PATH_TOOL;
+        setGraphic(textToolSvgPath.getSvgPath());
+        setTooltip(new Tooltip("Path"));
         optionButtonsBuilder = new PathOptions(config);
         nodeTree = new TreeMap<>();
         nodeTree.put(PRIMARY, new LinkedHashMap<>());
@@ -488,9 +492,9 @@ public class PathButtonTool extends DrawableButtonTool {
         private LinkedHashMap<String, Node> createOptions(){
             ComboBox<String> curveType = new ComboBox<>();
             curveType.getStyleClass().add("button");
-            curveType.getItems().addAll("Arc", "Quadratic", "Cubic");
+            curveType.getItems().addAll("Line", "Arc", "Quadratic", "Cubic");
             curveType.getSelectionModel().select(1);
-            curveType.setPrefSize(BUTTON_WIDTH + 20, BUTTON_HEIGHT - 10);
+            curveType.setPrefHeight(BUTTON_HEIGHT - 10);
             curveType.setOnAction(event -> {
                 String selectedItem = curveType.getSelectionModel().getSelectedItem();
                 config.setCurveType(selectedItem);
