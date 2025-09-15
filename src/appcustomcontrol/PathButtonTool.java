@@ -156,6 +156,7 @@ public class PathButtonTool extends DrawableButtonTool {
             pathShape.setTranslateY(0);
             ObservableList<PathElement> pathElements = pathShape.getElements();
             pathElements.add(new MoveTo(x, y));
+
             boolean shouldFill = optionButtonsBuilder.fillColorToggleButton.isSelected();
             pathShape.setFill(shouldFill ? config.getForegroundColor() : null);
             boolean shouldStroke = optionButtonsBuilder.strokeColorToggleButton.isSelected();
