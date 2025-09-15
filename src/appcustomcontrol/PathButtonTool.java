@@ -12,6 +12,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Spinner;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.MouseEvent;
@@ -474,6 +475,8 @@ public class PathButtonTool extends DrawableButtonTool {
     }
 
     public final class PathOptions extends OptionButtonsBuilder{
+
+        private Spinner<Double> rotationSpinner;
 
         private PathOptions(GlobalDrawPaneConfig config){
             super(config);
