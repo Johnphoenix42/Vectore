@@ -16,7 +16,7 @@ public class NewProjectModelConsumer implements Consumer<AppMenuBar.NewProjectMo
 
     @Override
     public void accept(AppMenuBar.NewProjectModel response) {
-        Pane canvasPane = DrawPane.createCanvas(response.getWidth(), response.getHeight());
+        Pane canvasPane = this.drawingArea.createCanvas(response.getWidth(), response.getHeight());
         drawingArea.getChildren().add(canvasPane);
         drawingArea.addEventListeners(canvasPane);
     }

@@ -1,9 +1,9 @@
 package appcustomcontrol;
 
-import appcomponent.DrawPane;
 import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
+import apputil.Icon;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
@@ -13,7 +13,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -39,7 +39,10 @@ public class CircleButtonTool extends DrawableButtonTool {
     Vector2d radiusVector;
 
     public CircleButtonTool(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
-        super("Circle", config, toolOptionsPanel);
+        super("", config, toolOptionsPanel);
+        Icon textToolSvgPath = Icon.CIRCLE_TOOL;
+        setGraphic(textToolSvgPath.getSvgPath());
+        setTooltip(new Tooltip("Circle"));
         optionButtonsBuilder = new CircleOptions(config);
         nodeTree.put(PRIMARY, new LinkedHashMap<>());
         nodeTree.put(SECONDARY, new LinkedHashMap<>());
@@ -65,15 +68,7 @@ public class CircleButtonTool extends DrawableButtonTool {
         if(!isDrawing) {
             mouseStartPointX = ev.getX();
             mouseStartPointY = ev.getY();
-            Circle circle = new Circle(0);
-            circle.setTranslateX(Math.min(mouseStartPointX, ev.getX()));
-            circle.setTranslateY(Math.min(mouseStartPointY, ev.getY()));
-            LinkedHashMap<String, Node> staticGlobalOptions = optionButtonsBuilder.getNodes(OptionButtonsBuilder.GLOBAL_NODE_OPTIONS);
-            boolean shouldFill = ((ToggleButton) staticGlobalOptions.get("fill_toggle_button")).isSelected();
-            circle.setFill(shouldFill ? config.getForegroundColor() : null);
-            circle.setStrokeWidth(config.getStrokeWidth());
-            boolean shouldStroke = ((ToggleButton) staticGlobalOptions.get("stroke_toggle_button")).isSelected();
-            circle.setStroke(shouldStroke ? config.getForegroundColor() : null);
+            Circle circle = getCircle(ev);
             activeCircle = circle;
 
             LinkedHashMap<String, Node> nodeMap = nodeTree.get(PRIMARY);
@@ -97,6 +92,18 @@ public class CircleButtonTool extends DrawableButtonTool {
         renderTree.get(SECONDARY).putIfAbsent(anchor.getId(), anchor);
         nodeTree.get(SECONDARY).replace(anchor.getId(), anchor);
         renderTree.get(SECONDARY).replace(anchor.getId(), anchor);
+    }
+
+    private Circle getCircle(MouseEvent ev) {
+        Circle circle = new Circle(0);
+        circle.setTranslateX(Math.min(mouseStartPointX, ev.getX()));
+        circle.setTranslateY(Math.min(mouseStartPointY, ev.getY()));
+        boolean shouldFill = optionButtonsBuilder.fillColorToggleButton.isSelected();
+        circle.setFill(shouldFill ? config.getForegroundColor() : null);
+        circle.setStrokeWidth(config.getStrokeWidth());
+        boolean shouldStroke = optionButtonsBuilder.strokeColorToggleButton.isSelected();
+        circle.setStroke(shouldStroke ? config.getStrokeColor() : null);
+        return circle;
     }
 
     /**
@@ -184,7 +191,7 @@ public class CircleButtonTool extends DrawableButtonTool {
 
         renderTree.get(SECONDARY).putAll(anchorsMap);
         anchorsMap.clear();
-        DrawPane.removeSecondaryNodeFromShapes(renderTree);
+        config.getDrawingAreaContext().removeSecondaryNodeFromShapes(renderTree);
         config.setSelectedNode(activeCircle);
     }
 

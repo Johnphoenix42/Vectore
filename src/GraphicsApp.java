@@ -16,6 +16,10 @@ import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * While every effort is made to accurately reflect the behavior of the program, Vectore is under continuous development and the code may have changed since the time of this writing.
  * Todo: Change the stroke toggle button to a Spinner that define the stroke-width with 0 as min and 10 as max.
@@ -63,6 +67,7 @@ public class GraphicsApp extends Application {
         VBox rightSidePanel = new VBox(generateSvg, text);
         rightSidePanel.setPrefWidth(180);
         rightSidePanel.setMaxWidth(240);
+        rightSidePanel.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
 
         HBox hBox = new HBox();
         VBox drawAreaVBox = new VBox(toolOptionsPanel, drawingArea);

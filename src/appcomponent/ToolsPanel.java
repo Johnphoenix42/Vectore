@@ -59,21 +59,10 @@ public class ToolsPanel extends ToolBar {
      */
     private void setInitialSelectedTool(DrawableButtonTool button, ObservableList<Node> items) {
         optionButtonsBuilder = button.getOptions();
-        VBox vBox = new VBox(3);
-        vBox.setAlignment(Pos.CENTER);
-        HBox hBox = new HBox(3);
-        ArrayList<Node> temp = new ArrayList<>();
         LinkedHashMap<String, Node> globalOptionNodes = optionButtonsBuilder.getNodes(DrawableButtonTool.OptionButtonsBuilder.GLOBAL_NODE_OPTIONS);
         for (Map.Entry<String, Node> globalToolOption : globalOptionNodes.entrySet()) {
-            if (globalToolOption.getKey().equals("color_picker")) vBox.getChildren().add(globalOptionNodes.get(globalToolOption.getKey()));
-            else if ("fill_toggle_button stroke_toggle_button".contains(globalToolOption.getKey())) {
-                hBox.getChildren().add(globalOptionNodes.get(globalToolOption.getKey()));
-            }
-            else temp.add(globalOptionNodes.get(globalToolOption.getKey()));
+            items.add(globalToolOption.getValue());
         }
-        vBox.getChildren().add(hBox);
-        items.add((vBox));
-        items.addAll(temp);
         button.setAsCurrentlySelectedTool();
         optionButtonsBuilder.switchToolOptions(items, button.getId());
     }

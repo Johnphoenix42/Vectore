@@ -10,10 +10,7 @@ import javafx.event.EventType;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.Spinner;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -46,7 +43,6 @@ public class PathButtonTool extends DrawableButtonTool {
     private boolean skipDrawBreakpoint = false;
 
     public PathButtonTool(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
-        super("Path", config, toolOptionsPanel);
         optionButtonsBuilder = new PathOptions(config);
         nodeTree = new TreeMap<>();
         nodeTree.put(PRIMARY, new LinkedHashMap<>());
@@ -132,7 +128,6 @@ public class PathButtonTool extends DrawableButtonTool {
 
         renderTree.get(SECONDARY).putAll(breakPointsMap);
         breakPointsMap.clear();
-        DrawPane.removeSecondaryNodeFromShapes(renderTree);
         config.setSelectedNode(activePath);
     }
 
@@ -153,11 +148,7 @@ public class PathButtonTool extends DrawableButtonTool {
             pathShape.setTranslateY(0);
             ObservableList<PathElement> pathElements = pathShape.getElements();
             pathElements.add(new MoveTo(x, y));
-            LinkedHashMap<String, Node> staticGlobalOptions = optionButtonsBuilder.getNodes(OptionButtonsBuilder.GLOBAL_NODE_OPTIONS);
-            boolean shouldFill = ((ToggleButton) staticGlobalOptions.get("fill_toggle_button")).isSelected();
             pathShape.setFill(shouldFill ? config.getForegroundColor() : null);
-            boolean shouldStroke = ((ToggleButton) staticGlobalOptions.get("stroke_toggle_button")).isSelected();
-            pathShape.setStroke(shouldStroke ? config.getForegroundColor(): null);
             pathShape.setStrokeWidth(config.getStrokeWidth());
             activePath = pathShape;
             nodeMap.put(SHAPE_NAMESPACE + shapeCounter, pathShape);
@@ -406,8 +397,6 @@ public class PathButtonTool extends DrawableButtonTool {
         Circle controlPoint = new Circle(3);
         controlPoint.setCenterX(Math.max(0, quadCurveTo.getControlX()));
         controlPoint.setCenterY(Math.max(0, quadCurveTo.getControlY()));
-        controlPoint.setCenterX(Math.min(DrawPane.getPane().getWidth(), quadCurveTo.getControlX()));
-        controlPoint.setCenterY(Math.min(DrawPane.getPane().getHeight(), quadCurveTo.getControlY()));
 
         controlPoint.setOnMousePressed(Event::consume);
         controlPoint.setOnMouseMoved(Event::consume);
@@ -431,8 +420,6 @@ public class PathButtonTool extends DrawableButtonTool {
         Circle controlPoint = new Circle(3);
         controlPoint.setCenterX(Math.max(0, p.getX()));
         controlPoint.setCenterY(Math.max(0, p.getY()));
-        controlPoint.setCenterX(Math.min(DrawPane.getPane().getWidth(), p.getX()));
-        controlPoint.setCenterY(Math.min(DrawPane.getPane().getHeight(), p.getY()));
 
         controlPoint.setOnMousePressed(Event::consume);
         controlPoint.setOnMouseMoved(Event::consume);
@@ -452,8 +439,6 @@ public class PathButtonTool extends DrawableButtonTool {
         Circle controlPoint = new Circle(3);
         controlPoint.setCenterX(Math.max(0, arcTo.getRadiusX()));
         controlPoint.setCenterY(Math.max(0, arcTo.getRadiusY()));
-        controlPoint.setCenterX(Math.min(DrawPane.getPane().getWidth(), arcTo.getRadiusX()));
-        controlPoint.setCenterY(Math.min(DrawPane.getPane().getHeight(), arcTo.getRadiusY()));
 
         controlPoint.setOnMousePressed(Event::consume);
         controlPoint.setOnMouseMoved(Event::consume);
@@ -476,8 +461,6 @@ public class PathButtonTool extends DrawableButtonTool {
 
     public final class PathOptions extends OptionButtonsBuilder{
 
-        private Spinner<Double> rotationSpinner;
-
         private PathOptions(GlobalDrawPaneConfig config){
             super(config);
             config.setForegroundColor(config.getForegroundColor());
@@ -489,30 +472,14 @@ public class PathButtonTool extends DrawableButtonTool {
         private LinkedHashMap<String, Node> createOptions(){
             ComboBox<String> curveType = new ComboBox<>();
             curveType.getStyleClass().add("button");
-            curveType.getItems().addAll("Arc", "Quadratic", "Cubic");
             curveType.getSelectionModel().select(1);
-            curveType.setPrefSize(BUTTON_WIDTH + 20, BUTTON_HEIGHT - 10);
             curveType.setOnAction(event -> {
                 String selectedItem = curveType.getSelectionModel().getSelectedItem();
                 config.setCurveType(selectedItem);
             });
 
-            /*ToggleButton strokeToggleButton = new ToggleButton("Stroke");
-            strokeToggleButton.setOnAction(event -> {
-                if (activePath == null) return;
-                if (strokeToggleButton.isSelected()){
-                    activePath.setStroke(config.getForegroundColor());
-                }else{
-                    activePath.setStroke(null);
-                }
-            });*/
-            // ToggleGroup toggleGroup = new ToggleGroup();
-
-            // fillToggleButton.setToggleGroup(toggleGroup);
-
             LinkedHashMap<String, Node> nodeList = nodeMap.getOrDefault(getId(), new LinkedHashMap<>());
             nodeList.put("curve_type", curveType);
-            //nodeList.put("stroke_toggle_button", strokeToggleButton);
             return nodeList;
         }
 

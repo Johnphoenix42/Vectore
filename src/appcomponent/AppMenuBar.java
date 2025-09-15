@@ -2,120 +2,95 @@ package appcomponent;
 
 import apputil.NewProjectModelConsumer;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 import javafx.stage.Popup;
+
+import java.awt.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AppMenuBar extends MenuBar {
 
-    private final Map<String, LinkedHashMap<String, String[]>> menuTreeMap = new LinkedHashMap<>();
-    private final NewProjectModelConsumer consumer;
+    private final Map<String, LinkedHashMap<String, MenuItem[]>> menuTreeMap = new LinkedHashMap<>();
+    private NewProjectModelConsumer consumer;
 
     public AppMenuBar(){
         super();
-
-        ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-        Dialog<NewProjectModel> dialog = new Dialog<>();
-        dialog.setHeaderText("Create new Project");
-        ObservableList<ButtonType> buttonTypeList = dialog.getDialogPane().getButtonTypes();
-        buttonTypeList.add(cancelButtonType);
-        buttonTypeList.add(createButtonType);
-
-        consumer = new NewProjectModelConsumer();
 
         menuTreeMap.put("File", new LinkedHashMap<>());
         menuTreeMap.put("Edit", new LinkedHashMap<>());
         menuTreeMap.put("Help", new LinkedHashMap<>());
         populateFileMap();
 
-        Set<Map.Entry<String, LinkedHashMap<String, String[]>>> firstLevelEntries =  menuTreeMap.entrySet();
-        for(Map.Entry<String, LinkedHashMap<String, String[]>> firstLevelEntry : firstLevelEntries){
+        Set<Map.Entry<String, LinkedHashMap<String, MenuItem[]>>> firstLevelEntries =  menuTreeMap.entrySet();
+        for(Map.Entry<String, LinkedHashMap<String, MenuItem[]>> firstLevelEntry : firstLevelEntries){
             Menu menu = new Menu(firstLevelEntry.getKey());
-            Set<Map.Entry<String, String[]>> secondLevelEntries =  firstLevelEntry.getValue().entrySet();
-            for(Map.Entry<String, String[]> secondLevelEntry : secondLevelEntries){
+            Set<Map.Entry<String, MenuItem[]>> secondLevelEntries =  firstLevelEntry.getValue().entrySet();
+            for(Map.Entry<String, MenuItem[]> secondLevelEntry : secondLevelEntries){
                 MenuItem menuItem;
-                if(secondLevelEntry.getValue().length == 1)
-                    menuItem = new MenuItem(secondLevelEntry.getValue()[0]);
-                else {
+                if(secondLevelEntry.getValue().length == 1) {
+                    menuItem = secondLevelEntry.getValue()[0];
+                    if (menuItem.getText().equals("New")) {
+                        createNewProject();
+                    } else if (menuItem.getText().equals("Open")) {
+                        openFileChooser();
+                    }
+                } else {
                     menuItem = new Menu(secondLevelEntry.getKey());
-                    for(String menuName : secondLevelEntry.getValue()){
-                        MenuItem thirdLevelItem = new MenuItem(menuName);
+                    for(MenuItem thirdLevelItem : secondLevelEntry.getValue()){
                         thirdLevelItem.setOnAction(event -> System.out.println("Secondary Action executed"));
-                        ((Menu) menuItem).getItems().add(new MenuItem(menuName));
+                        ((Menu) menuItem).getItems().add(thirdLevelItem);
                     }
                 }
-                menuItem.setOnAction(event -> {
-                    TextField widthTextField = new TextField("400");
-                    HBox widthBox = new HBox(new Text("Width"), widthTextField);
-                    widthBox.setAlignment(Pos.CENTER);
-                    widthBox.setSpacing(25);
-                    widthBox.setPadding(new Insets(10));
-                    widthBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
-
-                    TextField heightTextField = new TextField("400");
-                    HBox heightBox = new HBox(new Text("Height"), heightTextField);
-                    heightBox.setAlignment(Pos.CENTER);
-                    heightBox.setSpacing(25);
-                    heightBox.setPadding(new Insets(10));
-                    heightBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
-
-                    VBox borderPane = new VBox(widthBox, heightBox);
-                    dialog.getDialogPane().setContent(borderPane);
-                    dialog.setResultConverter(param -> {
-                        int width = 0;
-                        int height = 0;
-                        try {
-                            width = Integer.parseInt(widthTextField.getText());
-                            height = Integer.parseInt(heightTextField.getText());
-                        } catch (NumberFormatException e) {
-                            Alert alert = new Alert(Alert.AlertType.WARNING);
-                            alert.setContentText("Only numbers can be entered.");
-                            alert.showAndWait().ifPresent(response -> {
-                                widthTextField.clear();
-                                heightTextField.clear();
-                            });
-                        }
-                        return new NewProjectModel(width, height);
-                    });
-
-                    dialog.showAndWait()
-                            .filter(response -> {
-                                AtomicBoolean closed = new AtomicBoolean(false);
-                                dialog.setOnCloseRequest(event1 -> {
-                                    closed.set(true);});
-                                return !closed.get() && response.getWidth() > 1 && response.getHeight() > 1;
-                            })
-                            .ifPresent(consumer);
-
-                    /*final Button btOk = (Button) dialog.getDialogPane().lookupButton(createButtonType);
-                    btOk.addEventFilter(ActionEvent.ACTION, e -> {
-                        if (!validateAndStore()) {
-                            e.consume();
-                        }
-                        DrawPane.createCanvas()
-                        System.out.println("Dialog closed successfully");
-                    });
-                    dialog.show();*/
-                });
                 menu.getItems().add(menuItem);
             }
             getMenus().add(menu);
         }
     }
 
+    private void openFileChooser() {
+        MenuItem menuItem = menuTreeMap.get("File").get("Open")[0];
+
+        menuItem.setOnAction(event -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Open File");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("svg", "*.svg"));
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("png", "*.png"));
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("jpg", "*.jpg"));
+            fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("svg", "*.svg"));
+            File openedFile = fileChooser.showOpenDialog(getScene().getWindow());
+            final Desktop desktop = Desktop.getDesktop();
+            try {
+                if (Desktop.isDesktopSupported()) desktop.open(openedFile);
+                Scanner scanner = new Scanner(openedFile);
+                System.out.println("scanner.hasNext() = " + scanner.hasNext());
+            } catch (IOException e) {
+                System.out.println(">> Error: File not found or IOException");
+            }
+        });
+    }
+
     private void populateFileMap(){
-        LinkedHashMap<String, String[]> fileSubMap = menuTreeMap.get("File");
-        fileSubMap.put("New", new String[]{"New"});
-        fileSubMap.put("Open", new String[]{"Open"});
-        fileSubMap.put("Recent", new String[]{"This", "That", "These", "Those"});
-        fileSubMap.put("Exit", new String[]{"Exit"});
+        LinkedHashMap<String, MenuItem[]> fileSubMap = menuTreeMap.get("File");
+        fileSubMap.put("New", new MenuItem[]{new MenuItem("New")});
+        fileSubMap.put("Open", new MenuItem[]{new MenuItem("Open")});
+        fileSubMap.put("Recent", new MenuItem[]{new MenuItem("This"), new MenuItem("That"), new MenuItem("These"), new MenuItem("Those")});
+        fileSubMap.put("Exit", new MenuItem[]{new MenuItem("Exit")});
     }
 
     private void createAndShowPopup(){
@@ -131,13 +106,82 @@ public class AppMenuBar extends MenuBar {
         popup.show(getScene().getWindow());
     }
 
+    public void createNewProject() {
+        MenuItem menuItem = menuTreeMap.get("File").get("New")[0];
+
+        ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        Dialog<NewProjectModel> dialog = new Dialog<>();
+        dialog.setHeaderText("Create new Project");
+        ObservableList<ButtonType> buttonTypeList = dialog.getDialogPane().getButtonTypes();
+        buttonTypeList.add(cancelButtonType);
+        buttonTypeList.add(createButtonType);
+
+        consumer = new NewProjectModelConsumer();
+
+        menuItem.setOnAction(event -> {
+            TextField widthTextField = new TextField("400");
+            Label widthLabel = new Label("Width");
+            widthLabel.setLabelFor(widthTextField);
+            HBox widthBox = new HBox(widthLabel, widthTextField);
+            widthBox.setAlignment(Pos.CENTER);
+            widthBox.setSpacing(25);
+            widthBox.setPadding(new Insets(10));
+            widthBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
+
+            TextField heightTextField = new TextField("400");
+            Label heightLabel = new Label("Height");
+            heightLabel.setLabelFor(heightTextField);
+            HBox heightBox = new HBox(heightLabel, heightTextField);
+            heightBox.setAlignment(Pos.CENTER);
+            heightBox.setSpacing(25);
+            heightBox.setPadding(new Insets(10));
+            heightBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
+
+            VBox borderPane = new VBox(widthBox, heightBox);
+            dialog.getDialogPane().setContent(borderPane);
+            dialog.setResultConverter(param -> {
+                int width = 0;
+                int height = 0;
+                try {
+                    width = Integer.parseInt(widthTextField.getText());
+                    height = Integer.parseInt(heightTextField.getText());
+                } catch (NumberFormatException e) {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setContentText("Only numbers can be entered.");
+                    alert.showAndWait().ifPresent(response -> {
+                        widthTextField.clear();
+                        heightTextField.clear();
+                    });
+                }
+                return new NewProjectModel(width, height);
+            });
+
+            final Button btOk = (Button) dialog.getDialogPane().lookupButton(createButtonType);
+            btOk.setOnAction(e -> {
+                dialog.getResult().setNone(false);
+            });
+            dialog.showAndWait()
+                    .filter(response -> !response.isNone())
+                    .filter(response -> {
+                        System.out.println(">>>" + response.isNone());
+                        return response.getWidth() > 1 && response.getHeight() > 1;
+                    })
+                    .ifPresent(consumer);
+
+            //dialog.show();
+        });
+    }
+
     public NewProjectModelConsumer getConsumer() {
         return consumer;
     }
 
+
     public static class NewProjectModel {
 
         private int width, height;
+        private boolean none = true;
 
         NewProjectModel(int width, int height) {
             this.width = width;
@@ -158,6 +202,14 @@ public class AppMenuBar extends MenuBar {
 
         public int getHeight() {
             return height;
+        }
+
+        public void setNone(boolean none) {
+            this.none = none;
+        }
+
+        public boolean isNone() {
+            return none;
         }
     }
 

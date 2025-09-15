@@ -20,20 +20,20 @@ import java.util.Map;
 public class DrawPane extends StackPane {
 
     private final GlobalDrawPaneConfig drawAreaConfig;
-    private static Pane activeCanvasPane; // the active canvas we are using. This can change when we work with multiple tabs.
+    private Pane activeCanvasPane; // the active canvas we are using. This can change when we work with multiple tabs.
     private Node activeCanvasNode = null; // the node on the canvas currently being manipulated
 
     public DrawPane(GlobalDrawPaneConfig config, double width, double height){
         super();
         drawAreaConfig = config;
-        setBackground(new Background(new BackgroundFill(Color.WHEAT, null, null)));
+        setBackground(new Background(new BackgroundFill(Color.grayRgb(50), null, null)));
         setMaxSize(width, height);
         setMinSize(600, 600);
         autosize();
         setAlignment(Pos.CENTER);
     }
 
-    public static Pane createCanvas(int width, int height) {
+    public Pane createCanvas(int width, int height) {
         Pane canvasPane = new Pane();
         canvasPane.setStyle("-fx-background-color: white;");
         canvasPane.setPrefSize(width, height);
@@ -43,7 +43,7 @@ public class DrawPane extends StackPane {
         canvasPane.setClip(new Rectangle(width, height));
         canvasPane.setFocusTraversable(true);
         canvasPane.requestFocus();
-        DrawPane.activeCanvasPane = canvasPane;
+        this.activeCanvasPane = canvasPane;
         return canvasPane;
     }
 
@@ -142,13 +142,17 @@ public class DrawPane extends StackPane {
             renderNodes(canvasPane, MouseEvent.MOUSE_RELEASED, event);
             unRenderNodes(canvasPane, MouseEvent.MOUSE_RELEASED, event);
         });
+        canvasPane.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+            renderNodes(canvasPane, KeyEvent.KEY_PRESSED, event);
+            unRenderNodes(canvasPane, KeyEvent.KEY_PRESSED, event);
+        });
         canvasPane.addEventHandler(KeyEvent.KEY_TYPED, event -> {
             renderNodes(canvasPane, KeyEvent.KEY_TYPED, event);
             unRenderNodes(canvasPane, KeyEvent.KEY_TYPED, event);
         });
     }
 
-    public static void removeSecondaryNodeFromShapes(Map<String, LinkedHashMap<String, Node>> unDrawNodeTree) {
+    public void removeSecondaryNodeFromShapes(Map<String, LinkedHashMap<String, Node>> unDrawNodeTree) {
         LinkedHashMap<String, Node> unDrawPrimaryNodes = unDrawNodeTree.get(DrawableButtonTool.PRIMARY);
         LinkedHashMap<String, Node> unDrawSecondaryNodes = unDrawNodeTree.get(DrawableButtonTool.SECONDARY);
 
@@ -188,7 +192,7 @@ public class DrawPane extends StackPane {
         return svgString.toString();
     }
 
-    public static Pane getPane() {
+    public Pane getCanvas() {
         return activeCanvasPane;
     }
 
