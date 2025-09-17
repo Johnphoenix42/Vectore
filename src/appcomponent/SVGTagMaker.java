@@ -21,27 +21,25 @@ public class SVGTagMaker {
     }
 
     public String constructSvgElement(Path path, String tagName) {
-        String pathData = "";
+        StringBuilder pathData = new StringBuilder();
         for (PathElement pathElement : path.getElements()) {
             if (pathElement instanceof MoveTo) {
                 MoveTo moveTo = (MoveTo) pathElement;
-                pathData = "m" + parse(moveTo.getX()) + " " + parse(moveTo.getY());
+                pathData.append("m").append(parse(moveTo.getX())).append(" ").append(parse(moveTo.getY()));
             } else if (pathElement instanceof LineTo) {
                 LineTo lineTo = (LineTo) pathElement;
-                pathData = "l" + parse(lineTo.getX()) + " " + parse(lineTo.getY());
+                pathData.append("l").append(parse(lineTo.getX())).append(" ").append(parse(lineTo.getY()));
             } else if (pathElement instanceof QuadCurveTo) {
                 QuadCurveTo quadTo = (QuadCurveTo) pathElement;
-                pathData = "q" + parse(quadTo.getControlX()) + " " + parse(quadTo.getControlY()) + " " + parse(quadTo.getX()) + " " + parse(quadTo.getY());
+                pathData.append("q").append(parse(quadTo.getControlX())).append(" ").append(parse(quadTo.getControlY())).append(" ").append(parse(quadTo.getX())).append(" ").append(parse(quadTo.getY()));
             } else if (pathElement instanceof CubicCurveTo) {
                 CubicCurveTo cubicTo = (CubicCurveTo) pathElement;
-                pathData = "c" + parse(cubicTo.getControlX1()) + " " + parse(cubicTo.getControlY1()) + " " +
-                        parse(cubicTo.getControlX2()) + " " + parse(cubicTo.getControlY2())+ " " + parse(cubicTo.getX()) + " " + parse(cubicTo.getY());
+                pathData.append("c").append(parse(cubicTo.getControlX1())).append(" ").append(parse(cubicTo.getControlY1())).append(" ").append(parse(cubicTo.getControlX2())).append(" ").append(parse(cubicTo.getControlY2())).append(" ").append(parse(cubicTo.getX())).append(" ").append(parse(cubicTo.getY()));
             } else if (pathElement instanceof ArcTo) {
                 ArcTo arcTo = (ArcTo) pathElement;
-                pathData = "a" + parse(arcTo.getRadiusX()) + " " + parse(arcTo.getRadiusY()) + " " + parse(arcTo.getXAxisRotation()) + " " +
-                        arcTo.isLargeArcFlag() + " " + parse(arcTo.getX()) + " " + parse(arcTo.getY());
+                pathData.append("a").append(parse(arcTo.getRadiusX())).append(" ").append(parse(arcTo.getRadiusY())).append(" ").append(parse(arcTo.getXAxisRotation())).append(" ").append(arcTo.isLargeArcFlag()).append(" ").append(parse(arcTo.getX())).append(" ").append(parse(arcTo.getY()));
             } else if (pathElement instanceof ClosePath) {
-                pathData = "z";
+                pathData.append("z");
             }
         }
         return "<" + tagName + " d=\"" + pathData +

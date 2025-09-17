@@ -141,6 +141,7 @@ public class DrawPane extends StackPane {
         canvasPane.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
             renderNodes(canvasPane, MouseEvent.MOUSE_PRESSED, event);
             unRenderNodes(canvasPane, MouseEvent.MOUSE_PRESSED, event);
+            event.consume();
         });
         canvasPane.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
             setMouseCoordinates(event);
@@ -163,6 +164,7 @@ public class DrawPane extends StackPane {
             renderNodes(canvasPane, KeyEvent.KEY_TYPED, event);
             unRenderNodes(canvasPane, KeyEvent.KEY_TYPED, event);
         });
+
     }
 
     private void setMouseCoordinates(MouseEvent event) {

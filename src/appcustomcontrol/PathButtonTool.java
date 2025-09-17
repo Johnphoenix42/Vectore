@@ -12,8 +12,10 @@ import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Tab;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.InputEvent;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -91,10 +93,11 @@ public class PathButtonTool extends DrawableButtonTool {
 
     @Override
     public <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
         if (eventType == MouseEvent.MOUSE_PRESSED) {
-            TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
-            renderTree.put(PRIMARY, new LinkedHashMap<>());
-            renderTree.put(SECONDARY, new LinkedHashMap<>());
+
             LinkedHashMap<String, Node> anchorsMap = nodeTree.get(SECONDARY);
 
             //isPathDrawing at this point means path is not drawing or not.
@@ -116,9 +119,20 @@ public class PathButtonTool extends DrawableButtonTool {
                     renderTree.get(SECONDARY).put("control_" + count, pathElementControls.get(count));
                 }
             }
-            return renderTree;
+        } else if (eventType == KeyEvent.KEY_PRESSED) {
+            if(((KeyEvent) event).getCode().ordinal() == 10 && isPathDrawing) {
+                renderTree.get(PRIMARY).put(SHAPE_NAMESPACE + shapeCounter, activePath);
+                renderTree.get(SECONDARY).putAll(nodeTree.get(SECONDARY));
+                nodeTree.get(PRIMARY).remove(SHAPE_NAMESPACE + shapeCounter, activePath);
+                nodeTree.get(SECONDARY).clear();
+                shapeCounter--;
+                activePath = (Path) nodeTree.get(PRIMARY).get(SHAPE_NAMESPACE + shapeCounter);
+                isPathDrawing = false;
+                System.out.println(activePath);
+            }
+
         }
-        return null;
+        return renderTree;
     }
 
     @Override
@@ -129,7 +143,6 @@ public class PathButtonTool extends DrawableButtonTool {
     @Override
     public void addClickListener(DrawableButtonTool prevSelectedButton) {
         super.addClickListener(prevSelectedButton);
-        if (currentDrawingArea == null) return;
         TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
         renderTree.put(PRIMARY, new LinkedHashMap<>());
         renderTree.put(SECONDARY, new LinkedHashMap<>());
@@ -137,8 +150,11 @@ public class PathButtonTool extends DrawableButtonTool {
 
         renderTree.get(SECONDARY).putAll(breakPointsMap);
         breakPointsMap.clear();
-        currentDrawingArea = (DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent();
-        currentDrawingArea.removeSecondaryNodeFromShapes(renderTree);
+        Tab tab = toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem();
+        if (tab != null) {
+            currentDrawingArea = (DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent();
+            currentDrawingArea.removeSecondaryNodeFromShapes(renderTree);
+        }
         config.setSelectedNode(activePath);
     }
 
@@ -178,6 +194,7 @@ public class PathButtonTool extends DrawableButtonTool {
                 config.setActionMode(DrawPane.CanvasActionMode.SELECT_MODE);
                 //activePath = pathShape;
             });
+            currentDrawingArea.getCanvas().requestFocus();
         }else {
             Path pathShape = activePath;
             ObservableList<PathElement> pathElements = pathShape.getElements();

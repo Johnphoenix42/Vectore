@@ -31,7 +31,7 @@ public class NewProjectModelConsumer implements Consumer<AppMenuBar.NewProjectMo
 
     @Override
     public void accept(AppMenuBar.NewProjectModel response) {
-        Tab tab = new Tab("New Project");
+        Tab tab = new Tab(response.getProjectName());
         drawingTabbedPane.getTabs().add(tab);
         final DrawPane drawingArea = new DrawPane(this.config, 500, 200);
         drawingArea.setFocusTraversable(true);

@@ -181,7 +181,6 @@ public class CircleButtonTool extends DrawableButtonTool {
     @Override
     public void addClickListener(DrawableButtonTool prevSelectedButton) {
         super.addClickListener(prevSelectedButton);
-        if (currentDrawingArea == null) return;
         TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
         renderTree.put(PRIMARY, new LinkedHashMap<>());
         renderTree.put(SECONDARY, new LinkedHashMap<>());
@@ -189,8 +188,11 @@ public class CircleButtonTool extends DrawableButtonTool {
 
         renderTree.get(SECONDARY).putAll(anchorsMap);
         anchorsMap.clear();
-        currentDrawingArea = (DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent();
-        currentDrawingArea.removeSecondaryNodeFromShapes(renderTree);
+        Tab tab = toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem();
+        if (tab != null) {
+            currentDrawingArea = (DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent();
+            currentDrawingArea.removeSecondaryNodeFromShapes(renderTree);
+        }
         config.setSelectedNode(activeCircle);
     }
 

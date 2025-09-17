@@ -123,41 +123,52 @@ public class AppMenuBar extends MenuBar {
         consumer = new NewProjectModelConsumer(globalConfig);
 
         menuItem.setOnAction(event -> {
-            TextField widthTextField = new TextField("400");
+            TextField projectNameField = new TextField();
+            Label projectNameLabel = new Label("Project name");
+            projectNameLabel.setLabelFor(projectNameField);
+            HBox nameBox = new HBox(projectNameLabel, projectNameField);
+            nameBox.setAlignment(Pos.CENTER);
+            nameBox.setSpacing(25);
+            nameBox.setPadding(new Insets(10));
+            nameBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
+
+            Spinner<Integer> widthField = new Spinner<>(24, 5000, 400, 12);
             Label widthLabel = new Label("Width");
-            widthLabel.setLabelFor(widthTextField);
-            HBox widthBox = new HBox(widthLabel, widthTextField);
+            widthLabel.setLabelFor(widthField);
+            HBox widthBox = new HBox(widthLabel, widthField);
             widthBox.setAlignment(Pos.CENTER);
             widthBox.setSpacing(25);
             widthBox.setPadding(new Insets(10));
             widthBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
 
-            TextField heightTextField = new TextField("400");
+            Spinner<Integer> heightField = new Spinner<>(24, 5000, 400, 12);
             Label heightLabel = new Label("Height");
-            heightLabel.setLabelFor(heightTextField);
-            HBox heightBox = new HBox(heightLabel, heightTextField);
+            heightLabel.setLabelFor(heightField);
+            HBox heightBox = new HBox(heightLabel, heightField);
             heightBox.setAlignment(Pos.CENTER);
             heightBox.setSpacing(25);
             heightBox.setPadding(new Insets(10));
             heightBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
 
-            VBox borderPane = new VBox(widthBox, heightBox);
+            VBox borderPane = new VBox(nameBox, widthBox, heightBox);
             dialog.getDialogPane().setContent(borderPane);
             dialog.setResultConverter(param -> {
+                String name = "";
                 int width = 0;
                 int height = 0;
                 try {
-                    width = Integer.parseInt(widthTextField.getText());
-                    height = Integer.parseInt(heightTextField.getText());
+                    name = projectNameField.getText();
+                    width = widthField.getValue();
+                    height = heightField.getValue();
                 } catch (NumberFormatException e) {
                     Alert alert = new Alert(Alert.AlertType.WARNING);
                     alert.setContentText("Only numbers can be entered.");
                     alert.showAndWait().ifPresent(response -> {
-                        widthTextField.clear();
-                        heightTextField.clear();
+                        widthField.getEditor().clear();
+                        heightField.getEditor().clear();
                     });
                 }
-                return new NewProjectModel(width, height);
+                return new NewProjectModel(name, width, height);
             });
 
             final Button btOk = (Button) dialog.getDialogPane().lookupButton(createButtonType);
@@ -180,12 +191,18 @@ public class AppMenuBar extends MenuBar {
 
     public static class NewProjectModel {
 
+        private final String projectName;
         private int width, height;
         private boolean none = true;
 
-        NewProjectModel(int width, int height) {
+        NewProjectModel(String name, int width, int height) {
+            projectName = name;
             this.width = width;
             this.height = height;
+        }
+
+        public String getProjectName() {
+            return projectName;
         }
 
         public void setWidth(int width) {
