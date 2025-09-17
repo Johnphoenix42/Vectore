@@ -1,5 +1,6 @@
 package appcustomcontrol;
 
+import appcomponent.DrawPane;
 import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
@@ -29,6 +30,7 @@ public class RectangleButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "rectangle_";
     private final RectangleOptions optionButtonsBuilder;
+    private DrawPane currentDrawingArea;
     private Rectangle activeRectangle = null;
     private final Circle[] anchors = new Circle[2];
     private boolean isDrawing = false;
@@ -225,6 +227,7 @@ public class RectangleButtonTool extends DrawableButtonTool {
     @Override
     public void addClickListener(DrawableButtonTool prevSelectedButton) {
         super.addClickListener(prevSelectedButton);
+        if (currentDrawingArea == null) return;
         TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
         renderTree.put(PRIMARY, new LinkedHashMap<>());
         renderTree.put(SECONDARY, new LinkedHashMap<>());
@@ -232,7 +235,8 @@ public class RectangleButtonTool extends DrawableButtonTool {
 
         renderTree.get(SECONDARY).putAll(anchorsMap);
         anchorsMap.clear();
-        config.getDrawingAreaContext().removeSecondaryNodeFromShapes(renderTree);
+        currentDrawingArea = (DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent();
+        currentDrawingArea.removeSecondaryNodeFromShapes(renderTree);
         config.setSelectedNode(activeRectangle);
     }
 

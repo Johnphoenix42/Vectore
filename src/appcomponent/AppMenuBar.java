@@ -1,5 +1,6 @@
 package appcomponent;
 
+import apputil.GlobalDrawPaneConfig;
 import apputil.NewProjectModelConsumer;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
@@ -27,10 +28,12 @@ import java.util.*;
 public class AppMenuBar extends MenuBar {
 
     private final Map<String, LinkedHashMap<String, MenuItem[]>> menuTreeMap = new LinkedHashMap<>();
+    private final GlobalDrawPaneConfig globalConfig;
     private NewProjectModelConsumer consumer;
 
-    public AppMenuBar(){
+    public AppMenuBar(GlobalDrawPaneConfig config){
         super();
+        this.globalConfig = config;
 
         menuTreeMap.put("File", new LinkedHashMap<>());
         menuTreeMap.put("Edit", new LinkedHashMap<>());
@@ -79,8 +82,8 @@ public class AppMenuBar extends MenuBar {
                 if (Desktop.isDesktopSupported()) desktop.open(openedFile);
                 Scanner scanner = new Scanner(openedFile);
                 System.out.println("scanner.hasNext() = " + scanner.hasNext());
-            } catch (IOException e) {
-                System.out.println(">> Error: File not found or IOException");
+            } catch (IOException | NullPointerException e) {
+                System.out.printf(">> Error: NullPointer or IOException:\t%s", e.getMessage());
             }
         });
     }
@@ -117,7 +120,7 @@ public class AppMenuBar extends MenuBar {
         buttonTypeList.add(cancelButtonType);
         buttonTypeList.add(createButtonType);
 
-        consumer = new NewProjectModelConsumer();
+        consumer = new NewProjectModelConsumer(globalConfig);
 
         menuItem.setOnAction(event -> {
             TextField widthTextField = new TextField("400");
@@ -163,10 +166,7 @@ public class AppMenuBar extends MenuBar {
             });
             dialog.showAndWait()
                     .filter(response -> !response.isNone())
-                    .filter(response -> {
-                        System.out.println(">>>" + response.isNone());
-                        return response.getWidth() > 1 && response.getHeight() > 1;
-                    })
+                    .filter(response -> response.getWidth() > 1 && response.getHeight() > 1)
                     .ifPresent(consumer);
 
             //dialog.show();

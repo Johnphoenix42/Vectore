@@ -30,3 +30,10 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+apputil/AppLogger.java
+apputil/ArrayStack.java
+apputil/DoublyLinkedList.java
+apputil/SinglyLinkedList.java
+apputil/Stack.java
+appcomponent/Canvas.java

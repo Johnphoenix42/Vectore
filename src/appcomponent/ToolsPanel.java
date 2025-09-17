@@ -4,17 +4,13 @@ import appcustomcontrol.*;
 import apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Polygon;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -23,6 +19,7 @@ public class ToolsPanel extends ToolBar {
     private final GlobalDrawPaneConfig config;
     protected final SubToolsPanel toolOptionsPanel;
     DrawableButtonTool.OptionButtonsBuilder optionButtonsBuilder;
+    private TabPane drawingTabbedPane;
 
     public ToolsPanel(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel){
         super();
@@ -67,8 +64,8 @@ public class ToolsPanel extends ToolBar {
         optionButtonsBuilder.switchToolOptions(items, button.getId());
     }
 
-    public void setDrawPane(DrawPane drawingArea) {
-        config.setDrawingAreaContext(drawingArea);
+    public void setTabbedPane(TabPane drawingTabbedPane) {
+        this.drawingTabbedPane = drawingTabbedPane;
     }
 
     class ButtonTool<T extends DrawableButtonTool> {

@@ -32,6 +32,7 @@ public class TextButtonTool extends DrawableButtonTool {
     public static final String SHAPE_NAMESPACE = "text_";
     private boolean isDrawing = false;
     private final TextOptions optionButtonsBuilder;
+    private DrawPane currentDrawingArea;
     private Rectangle activeTextBounds = null;
     private Text activeText = null;
     private Font currentFont = Font.getDefault();
@@ -114,7 +115,6 @@ public class TextButtonTool extends DrawableButtonTool {
             activeTextBounds.setFill(Color.TRANSPARENT);
             activeTextBounds.setX(mouseStartPointX);
             activeTextBounds.setY(mouseStartPointY);
-            activeTextBounds.setStrokeWidth(config.getStrokeWidth());
             activeTextBounds.setStroke(Color.BLACK);
             activeTextBounds.setStrokeDashOffset(20);
 
@@ -124,7 +124,7 @@ public class TextButtonTool extends DrawableButtonTool {
                 });
                 activeTextBounds.setOnMousePressed(event -> {
                     isTextWriting = true;
-                    config.getDrawingAreaContext().getCanvas().requestFocus();
+                    currentDrawingArea.getCanvas().requestFocus();
                     event.consume();
                 });
             }
@@ -226,13 +226,12 @@ public class TextButtonTool extends DrawableButtonTool {
             text.setId(SHAPE_NAMESPACE + shapeCounter);
             renderTree.get(PRIMARY).put(SHAPE_NAMESPACE + shapeCounter, text);
             nodeTree.get(PRIMARY).put(SHAPE_NAMESPACE + shapeCounter, text);
-            config.getDrawingAreaContext().getCanvas().requestFocus(); // so that key events can work.
+            currentDrawingArea.getCanvas().requestFocus(); // so that key events can work.
             text.setOnMouseEntered(textEvent -> {
                 text.setCursor(Cursor.TEXT);
             });
             text.setOnMousePressed(textEvent -> {
-                DrawPane drawingArea = config.getDrawingAreaContext();
-                if (!drawingArea.getCanvas().isFocused()) drawingArea.getCanvas().requestFocus();
+                if (!currentDrawingArea.getCanvas().isFocused()) currentDrawingArea.getCanvas().requestFocus();
 
                 TreeMap<String, LinkedHashMap<String, Node>> anotherRenderTree = new TreeMap<>();
                 anotherRenderTree.put(PRIMARY, new LinkedHashMap<>());
@@ -246,7 +245,7 @@ public class TextButtonTool extends DrawableButtonTool {
                 anotherRenderTree.get(SECONDARY).put(SHAPE_NAMESPACE + 0, activeTextBounds);
                 anotherRenderTree.get(SECONDARY).put(anchors[0].getId(), anchors[0]);
                 anotherRenderTree.get(SECONDARY).put(anchors[1].getId(), anchors[1]);
-                drawingArea.foreignRender(anotherRenderTree);
+                currentDrawingArea.foreignRender(anotherRenderTree);
                 activeText = text;
                 config.setSelectedNode(text);
             });
@@ -312,6 +311,7 @@ public class TextButtonTool extends DrawableButtonTool {
     @Override
     public void addClickListener(DrawableButtonTool prevSelectedButton) {
         super.addClickListener(prevSelectedButton);
+        if (currentDrawingArea == null) return;
         TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
         renderTree.put(PRIMARY, new LinkedHashMap<>());
         renderTree.put(SECONDARY, new LinkedHashMap<>());
@@ -321,7 +321,8 @@ public class TextButtonTool extends DrawableButtonTool {
         // it can be removed from to canvas
         renderTree.get(SECONDARY).putAll(anchorsMap);
         anchorsMap.clear();
-        config.getDrawingAreaContext().removeSecondaryNodeFromShapes(renderTree);
+        currentDrawingArea = (DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent();
+        currentDrawingArea.removeSecondaryNodeFromShapes(renderTree);
         config.setSelectedNode(null);
     }
 
@@ -330,7 +331,6 @@ public class TextButtonTool extends DrawableButtonTool {
         ComboBox<String> fontComboBox;
         Spinner<Double> fontSizeSpinner;
         ToggleButton toggleButtonItalic;
-        ComboBox<String> fontWeightBox;
 
         private TextOptions(GlobalDrawPaneConfig config){
             super(config);

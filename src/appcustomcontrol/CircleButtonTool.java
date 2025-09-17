@@ -1,5 +1,6 @@
 package appcustomcontrol;
 
+import appcomponent.DrawPane;
 import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
@@ -10,10 +11,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.Spinner;
-import javafx.scene.control.SpinnerValueFactory;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -31,7 +29,8 @@ import java.util.*;
 public class CircleButtonTool extends DrawableButtonTool {
 
     public static final String SHAPE_NAMESPACE = "circle_";
-    CircleOptions optionButtonsBuilder;
+    private final CircleOptions optionButtonsBuilder;
+    private DrawPane currentDrawingArea;
     private Circle activeCircle = null;
     private boolean isDrawing = false;
     private double mouseStartPointX = 0, mouseStartPointY = 0;
@@ -76,6 +75,7 @@ public class CircleButtonTool extends DrawableButtonTool {
             renderTree.get(PRIMARY).put(SHAPE_NAMESPACE + shapeCounter, circle);
             shapeCounter++;
             isDrawing = true;
+            config.setSelectedNode(activeCircle);
             anchor = createAnchorPoint(ev.getX(), ev.getY(), 0, renderTree);
             anchor.setId("point_" + shapeCounter + "_" + 0);
         }else {
@@ -96,8 +96,8 @@ public class CircleButtonTool extends DrawableButtonTool {
 
     private Circle getCircle(MouseEvent ev) {
         Circle circle = new Circle(0);
-        circle.setTranslateX(Math.min(mouseStartPointX, ev.getX()));
-        circle.setTranslateY(Math.min(mouseStartPointY, ev.getY()));
+        circle.setCenterX(Math.min(mouseStartPointX, ev.getX()));
+        circle.setCenterY(Math.min(mouseStartPointY, ev.getY()));
         boolean shouldFill = optionButtonsBuilder.fillColorToggleButton.isSelected();
         circle.setFill(shouldFill ? config.getForegroundColor() : null);
         circle.setStrokeWidth(config.getStrokeWidth());
@@ -136,13 +136,13 @@ public class CircleButtonTool extends DrawableButtonTool {
             anchor.setCenterX(eventX);
             anchor.setCenterY(eventY);
             if (anchorCounter == 0) {
-                activeCircle.setTranslateX(eventX);
-                activeCircle.setTranslateY(eventY);
+                activeCircle.setCenterX(eventX);
+                activeCircle.setCenterY(eventY);
                 Circle anchor2 = (Circle) nodeTree.get(SECONDARY).get("point_" + shapeCounter + "_" + 1);
                 anchor2.setCenterX(eventX - radiusVector.getX());
                 anchor2.setCenterY(eventY - radiusVector.getY());
             } else {
-                radiusVector.set(activeCircle.getTranslateX() - eventX, activeCircle.getTranslateY() - eventY);
+                radiusVector.set(activeCircle.getCenterX() - eventX, activeCircle.getCenterY() - eventY);
                 activeCircle.setRadius(radiusVector.length());
             }
             event.consume();
@@ -158,12 +158,9 @@ public class CircleButtonTool extends DrawableButtonTool {
         double radius = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
         activeCircle.setRadius(radius);
 
-        Node xCoordSpinnerSpinner = getOptions().getWidthSpinner();
-        ((Spinner<Double>) xCoordSpinnerSpinner).getValueFactory().setValue(deltaX);
-        Node yCoordSpinner = getOptions().getHeightSpinner();
-        ((Spinner<Double>) yCoordSpinner).getValueFactory().setValue(deltaY);
-        Node radiusSpinner = getOptions().getRadiusSpinner();
-        ((Spinner<Double>) radiusSpinner).getValueFactory().setValue(radius);
+        optionButtonsBuilder.getXSpinner().getValueFactory().setValue(deltaX);
+        optionButtonsBuilder.getYSpinner().getValueFactory().setValue(deltaY);
+        optionButtonsBuilder.getRadiusSpinner().getValueFactory().setValue(radius);
     }
 
     @Override
@@ -184,6 +181,7 @@ public class CircleButtonTool extends DrawableButtonTool {
     @Override
     public void addClickListener(DrawableButtonTool prevSelectedButton) {
         super.addClickListener(prevSelectedButton);
+        if (currentDrawingArea == null) return;
         TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
         renderTree.put(PRIMARY, new LinkedHashMap<>());
         renderTree.put(SECONDARY, new LinkedHashMap<>());
@@ -191,11 +189,16 @@ public class CircleButtonTool extends DrawableButtonTool {
 
         renderTree.get(SECONDARY).putAll(anchorsMap);
         anchorsMap.clear();
-        config.getDrawingAreaContext().removeSecondaryNodeFromShapes(renderTree);
+        currentDrawingArea = (DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent();
+        currentDrawingArea.removeSecondaryNodeFromShapes(renderTree);
         config.setSelectedNode(activeCircle);
     }
 
     public final class CircleOptions extends OptionButtonsBuilder{
+
+        private Spinner<Double> centerXSpinner;
+        private Spinner<Double> centerYSpinner;
+        private Spinner<Double> radiusSpinner;
 
         private CircleOptions(GlobalDrawPaneConfig config){
             super(config);
@@ -241,6 +244,7 @@ public class CircleButtonTool extends DrawableButtonTool {
                 if (activeCircle == null) return;
                 activeCircle.setCenterX(valueFactory.getValue());
             }));
+            centerXSpinner = numberSpinner;
             return box;
         }
 
@@ -262,6 +266,7 @@ public class CircleButtonTool extends DrawableButtonTool {
                 if (activeCircle == null) return;
                 activeCircle.setCenterY(valueFactory.getValue());
             }));
+            centerYSpinner = numberSpinner;
             return box;
         }
 
@@ -283,6 +288,7 @@ public class CircleButtonTool extends DrawableButtonTool {
                 if (activeCircle == null) return;
                 activeCircle.setRadius(valueFactory.getValue());
             }));
+            radiusSpinner = numberSpinner;
             return box;
         }
 
@@ -298,16 +304,16 @@ public class CircleButtonTool extends DrawableButtonTool {
             return textInput;
         }
 
-        Node getWidthSpinner () {
-            return ((HBox) getOptions().getNodes(getId()).get("x_coordinate_box")).getChildren().get(1);
+        Spinner<Double> getXSpinner () {
+            return centerXSpinner;
         }
 
-        Node getHeightSpinner () {
-            return ((HBox) getOptions().getNodes(getId()).get("y_coordinate_box")).getChildren().get(1);
+        Spinner<Double> getYSpinner () {
+            return centerYSpinner;
         }
 
-        Node getRadiusSpinner() {
-            return ((HBox) getOptions().getNodes(getId()).get("radius_box")).getChildren().get(1);
+        Spinner<Double> getRadiusSpinner() {
+            return radiusSpinner;
         }
     }
 

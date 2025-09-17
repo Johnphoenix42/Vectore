@@ -8,6 +8,8 @@ import javafx.scene.paint.Color;
 
 public class SubToolsPanel extends ToolBar {
 
+    private TabPane drawingTabbedPane;
+
     public SubToolsPanel(){
         super();
         autosize();
@@ -15,4 +17,11 @@ public class SubToolsPanel extends ToolBar {
         setBackground(new Background(new BackgroundFill(Color.DARKGRAY, null, null)));
     }
 
+    public void setDrawingTabbedPane(TabPane drawingTabbedPane) {
+        this.drawingTabbedPane = drawingTabbedPane;
+    }
+
+    public TabPane getDrawingTabbedPane() {
+        return drawingTabbedPane;
+    }
 }

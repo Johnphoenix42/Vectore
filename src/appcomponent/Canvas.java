@@ -2,59 +2,35 @@ package appcomponent;
 
 import appcustomcontrol.DrawableButtonTool;
 import apputil.GlobalDrawPaneConfig;
+import javafx.collections.ObservableList;
 import javafx.event.EventType;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Path;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Text;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
-public class DrawPane extends StackPane {
+public class Canvas extends Pane {
 
-    private final GlobalDrawPaneConfig drawAreaConfig;
     private final LinkedHashMap<String, Node> globalPrimaryElements = new LinkedHashMap<>();
-    private Pane activeCanvasPane; // the active canvas we are using. This can change when we work with multiple tabs.
-    private Node activeCanvasNode = null; // the node on the canvas currently being manipulated
-    private Text mouseCoordinateText;
+    private final GlobalDrawPaneConfig globalConfig;
 
-    public DrawPane(GlobalDrawPaneConfig config, double width, double height){
-        super();
-        drawAreaConfig = config;
-        setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-        autosize();
-        setAlignment(Pos.CENTER);
-    }
+    Canvas(GlobalDrawPaneConfig config, int width, int height) {
+        this.globalConfig = config;
+        setStyle("-fx-background-color: white;");
+        setPrefSize(width, height);
+        setMaxSize(width, height);
+        setEffect(new DropShadow(6, Color.BLACK));
 
-    public Pane createCanvas(int width, int height) {
-        Pane canvasPane = new Pane();
-        canvasPane.setStyle("-fx-background-color: white;");
-        canvasPane.setPrefSize(width, height);
-        canvasPane.setMaxSize(width, height);
-        canvasPane.setEffect(new DropShadow(6, Color.BLACK));
-
-        canvasPane.setClip(new Rectangle(width, height));
-        canvasPane.setFocusTraversable(true);
-        canvasPane.requestFocus();
-        this.activeCanvasPane = canvasPane;
-        return canvasPane;
-    }
-
-    public void addCoordinateText() {
-        mouseCoordinateText = new Text("X: null, Y: null");
-        mouseCoordinateText.setFill(Color.grayRgb(250));
-        setAlignment(mouseCoordinateText, Pos.BOTTOM_LEFT);
-        getChildren().add(mouseCoordinateText);
+        setClip(new Rectangle(width, height));
+        setFocusTraversable(true);
+        requestFocus();
     }
 
     public void foreignRender(Map<String, LinkedHashMap<String, Node>> nodeTree) {
@@ -66,7 +42,7 @@ public class DrawPane extends StackPane {
                 if (nodeToAdd == null) continue;
                 try {
                     globalPrimaryElements.put(nodeToAdd.getKey(), nodeToAdd.getValue());
-                    activeCanvasPane.getChildren().add(nodeToAdd.getValue());
+                    getChildren().add(nodeToAdd.getValue());
                 } catch (IllegalArgumentException exception) {
                     System.err.println(">> Render error: You are attempting to render "+ nodeToAdd.getValue() + " twice.");
                 }
@@ -76,7 +52,7 @@ public class DrawPane extends StackPane {
         for (Map.Entry<String, Node> nodeToAdd : secondaryNodes.entrySet()) {
             if (nodeToAdd == null || nodeToAdd.getValue() == null) continue;
             try {
-                activeCanvasPane.getChildren().add(nodeToAdd.getValue());
+                getChildren().add(nodeToAdd.getValue());
             } catch (IllegalArgumentException exception) {
                 System.err.println(">> Render error: You are attempting to render "+ nodeToAdd.getValue() + " twice.");
             }
@@ -84,7 +60,7 @@ public class DrawPane extends StackPane {
     }
 
     private <T extends InputEvent> void renderNodes(Pane canvasPane, EventType<T> type, T event){
-        Map<String, LinkedHashMap<String, Node>> nodeTree = drawAreaConfig.getCurrentTool().draw(type, event);
+        Map<String, LinkedHashMap<String, Node>> nodeTree = globalConfig.getCurrentTool().draw(type, event);
         if(nodeTree != null) {
             LinkedHashMap<String, Node> primaryNodes = nodeTree.get(DrawableButtonTool.PRIMARY);
             LinkedHashMap<String, Node> secondaryNodes = nodeTree.get(DrawableButtonTool.SECONDARY);
@@ -111,7 +87,7 @@ public class DrawPane extends StackPane {
     }
 
     private <T extends InputEvent> void unRenderNodes(Pane canvasPane, EventType<T> type, T event){
-        Map<String, LinkedHashMap<String, Node>> unDrawNodeTree = drawAreaConfig.getCurrentTool().unDraw(type, event);
+        Map<String, LinkedHashMap<String, Node>> unDrawNodeTree = globalConfig.getCurrentTool().unDraw(type, event);
         if (unDrawNodeTree != null) {
             LinkedHashMap<String, Node> unDrawPrimaryNodes = unDrawNodeTree.get(DrawableButtonTool.PRIMARY);
             LinkedHashMap<String, Node> unDrawSecondaryNodes = unDrawNodeTree.get(DrawableButtonTool.SECONDARY);
@@ -143,7 +119,6 @@ public class DrawPane extends StackPane {
             unRenderNodes(canvasPane, MouseEvent.MOUSE_PRESSED, event);
         });
         canvasPane.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
-            setMouseCoordinates(event);
             renderNodes(canvasPane, MouseEvent.MOUSE_MOVED, event);
             unRenderNodes(canvasPane, MouseEvent.MOUSE_MOVED, event);
         });
@@ -165,12 +140,6 @@ public class DrawPane extends StackPane {
         });
     }
 
-    private void setMouseCoordinates(MouseEvent event) {
-        String xPos = String.valueOf((int) event.getX());
-        String yPos = String.valueOf((int) event.getY());
-        mouseCoordinateText.setText("X: " + xPos + ", Y: " + yPos);
-    }
-
     public void removeSecondaryNodeFromShapes(Map<String, LinkedHashMap<String, Node>> unDrawNodeTree) {
         LinkedHashMap<String, Node> unDrawPrimaryNodes = unDrawNodeTree.get(DrawableButtonTool.PRIMARY);
         LinkedHashMap<String, Node> unDrawSecondaryNodes = unDrawNodeTree.get(DrawableButtonTool.SECONDARY);
@@ -178,12 +147,12 @@ public class DrawPane extends StackPane {
         if (unDrawPrimaryNodes != null) {
             for (Map.Entry<String, Node> nodeToRemove : unDrawPrimaryNodes.entrySet()) {
                 if (nodeToRemove == null) continue;
-                activeCanvasPane.getChildren().remove(nodeToRemove.getValue());
+                getChildren().remove(nodeToRemove.getValue());
             }
         }
         if(unDrawSecondaryNodes == null) return;
         for (Map.Entry<String, Node> nodeToRemove : unDrawSecondaryNodes.entrySet()) {
-            if (nodeToRemove != null && nodeToRemove.getValue() != null) activeCanvasPane.getChildren().remove(nodeToRemove.getValue());
+            if (nodeToRemove != null && nodeToRemove.getValue() != null) getChildren().remove(nodeToRemove.getValue());
         }
     }
 
@@ -192,38 +161,23 @@ public class DrawPane extends StackPane {
     of which is fed to viewBox attribute.
      */
     public String generateSVGHTML(){
-        Set<Map.Entry<String,Node>> nodeContents = globalPrimaryElements.entrySet();
-        int width = (int) activeCanvasPane.getBoundsInLocal().getWidth();
-        int height = (int) activeCanvasPane.getBoundsInLocal().getHeight();
+        ObservableList<Node> nodeContents = getChildren();
+        double width = getBoundsInLocal().getWidth();
+        double height = getBoundsInLocal().getHeight();
         StringBuilder svgString = new StringBuilder("<svg viewBox=\"0 0 " + width + " " + height + "\">");
-        for (Map.Entry<String, Node> nodeContent : nodeContents) {
-            Node node = nodeContent.getValue();
-            SVGTagMaker tagMaker = new SVGTagMaker();
-            String svgTag;
-            if (node instanceof Rectangle) svgTag = tagMaker.constructSvgElement((Rectangle) node, "rect");
-            else if (node instanceof Circle) svgTag = tagMaker.constructSvgElement((Circle) node, "circle");
-            else if (node instanceof Path) svgTag = tagMaker.constructSvgElement((Path) node, "path");
-            else svgTag = tagMaker.constructSvgElement((Text) node, "text");
-            svgString.append("\n\t").append(svgTag);
+        for (Node nodeContent : nodeContents) {
+            String tagName = nodeContent.getClass().getSimpleName().toLowerCase();
+            String textContent = "";
+            svgString.append("\n\t<")
+                    .append(tagName)
+                    .append(">")
+                    .append(textContent)
+                    .append("</")
+                    .append(tagName)
+                    .append(">");
         }
         svgString.append("\n</svg>");
         return svgString.toString();
-    }
-
-    public Pane getCanvas() {
-        return activeCanvasPane;
-    }
-
-    public void setActiveCanvasNode (Node activeNode) {
-        this.activeCanvasNode = activeNode;
-    }
-
-    public Node getActiveCanvasNode(){
-        return activeCanvasNode;
-    }
-
-    public enum CanvasActionMode {
-        DRAW_MODE, SELECT_MODE
     }
 
 }

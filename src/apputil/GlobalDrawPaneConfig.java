@@ -24,6 +24,10 @@ public final class GlobalDrawPaneConfig {
     private DrawPane drawingAreaContext;
     private Paint strokeColor = Color.BLACK;
 
+    public static GlobalDrawPaneConfig getInstance(){
+        return globalDrawPaneConfig;
+    }
+
     public void setForegroundColor(Paint foregroundColor){
         this.foregroundColor = foregroundColor;
     }
@@ -56,10 +60,6 @@ public final class GlobalDrawPaneConfig {
         this.currentTool = currentTool;
     }
 
-    public static GlobalDrawPaneConfig getInstance(){
-        return globalDrawPaneConfig;
-    }
-
     public void setPreviousTool(DrawableButtonTool prevSelectedButton) {
         this.prevSelectedTool = prevSelectedButton;
     }
@@ -84,13 +84,13 @@ public final class GlobalDrawPaneConfig {
         return canvasActionMode;
     }
 
-    public void setDrawingAreaContext(DrawPane drawingArea) {
+    /*public void setDrawingAreaContext(DrawPane drawingArea) {
         this.drawingAreaContext = drawingArea;
-    }
+    }*/
 
-    public DrawPane getDrawingAreaContext() {
+    /*public DrawPane getDrawingAreaContext() {
         return drawingAreaContext;
-    }
+    }*/
 
     public Paint getStrokeColor() {
         return this.strokeColor;

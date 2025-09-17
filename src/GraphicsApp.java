@@ -5,20 +5,12 @@ import appcomponent.ToolsPanel;
 import apputil.GlobalDrawPaneConfig;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
-
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * While every effort is made to accurately reflect the behavior of the program, Vectore is under continuous development and the code may have changed since the time of this writing.
@@ -32,52 +24,49 @@ import java.util.regex.Pattern;
  * Todo: An export and import (svg) menu button.
  */
 public class GraphicsApp extends Application {
-    private static final Double WIDTH;
-    private static final Double HEIGHT;
-    static {
-        Rectangle2D screenRect = Screen.getPrimary().getVisualBounds();
-        WIDTH = screenRect.getWidth();
-        HEIGHT = screenRect.getHeight();
-    }
 
     @Override
     public void start(Stage primaryStage){
         VBox vBox = new VBox();
         Scene scene = new Scene(vBox, 800, 600);
+        TabPane drawingTabbedPane = new TabPane();
+        drawingTabbedPane.autosize();
+        drawingTabbedPane.setBackground(new Background(new BackgroundFill(Color.grayRgb(50), null, null)));
+        drawingTabbedPane.setTabMaxHeight(Double.MAX_VALUE);
         GlobalDrawPaneConfig drawPaneConfig = GlobalDrawPaneConfig.getInstance();
-        AppMenuBar menuBar = new AppMenuBar();
+        AppMenuBar menuBar = new AppMenuBar(drawPaneConfig);
         SubToolsPanel toolOptionsPanel = new SubToolsPanel();
+        toolOptionsPanel.setDrawingTabbedPane(drawingTabbedPane);
         ToolsPanel sideToolsPanel = new ToolsPanel(drawPaneConfig, toolOptionsPanel);
-        DrawPane drawingArea = new DrawPane(drawPaneConfig, WIDTH, HEIGHT);
-        drawingArea.setFocusTraversable(true);
-        sideToolsPanel.setDrawPane(drawingArea);
+        //sideToolsPanel.setTabbedPane(drawingTabbedPane);
         sideToolsPanel.setFocusTraversable(true);
-        menuBar.getConsumer().setDrawPane(drawingArea);
+        menuBar.getConsumer().setTabbedPane(drawingTabbedPane);
 
         /*scene.widthProperty().addListener((observable, oldValue, newValue) -> {
             drawingArea.setPrefWidth((Double) newValue);
-        });
-        scene.heightProperty().addListener((observable, oldValue, newValue) -> {
-            drawingArea.setPrefHeight((Double) newValue);
         });*/
 
         Button generateSvg = new Button("Generate SVG");
-        Text text = new Text();
-        generateSvg.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> text.setText(drawingArea.generateSVGHTML()));
-        VBox rightSidePanel = new VBox(generateSvg, text);
-        rightSidePanel.setPrefWidth(180);
-        rightSidePanel.setMaxWidth(240);
+        TextArea htmlEditor = new TextArea();
+        generateSvg.setOnAction(event -> {
+            DrawPane drawPane = (DrawPane) drawingTabbedPane.getSelectionModel().getSelectedItem().getContent();
+            String svgCode = drawPane.generateSVGHTML();
+            htmlEditor.setText(svgCode);
+        });
+        VBox rightSidePanel = new VBox(generateSvg, htmlEditor);
+        rightSidePanel.setPrefWidth(200);
+        rightSidePanel.setMaxWidth(300);
         rightSidePanel.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
 
-        HBox hBox = new HBox();
-        VBox drawAreaVBox = new VBox(toolOptionsPanel, drawingArea);
+        SplitPane splitPane = new SplitPane();
+        VBox drawAreaVBox = new VBox(toolOptionsPanel, drawingTabbedPane);
         HBox.setHgrow(drawAreaVBox, Priority.ALWAYS);
-        VBox.setVgrow(drawingArea, Priority.ALWAYS);
-        hBox.getChildren().addAll(sideToolsPanel, drawAreaVBox, rightSidePanel);
+        VBox.setVgrow(drawingTabbedPane, Priority.ALWAYS);
+        splitPane.getItems().addAll(sideToolsPanel, drawAreaVBox, rightSidePanel);
 
-
+        VBox.setVgrow(splitPane, Priority.ALWAYS);
         ObservableList<Node> rootChildren = vBox.getChildren();
-        rootChildren.addAll(menuBar, hBox);
+        rootChildren.addAll(menuBar, splitPane);
 
         scene.setFill(Color.color(1, 1, 0.9));
 

@@ -12,12 +12,13 @@ import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.SVGPath;
 import javafx.scene.shape.Shape;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public abstract class DrawableButtonTool extends ToolbarButton implements DrawTriggerable, OptionToolbarSettable{
 
@@ -83,9 +84,10 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
 
         OptionButtonsBuilder(GlobalDrawPaneConfig config){
             this.config = config;
-            ToggleGroup toggleGroup = new ToggleGroup();
-            createFillButtons(toggleGroup);
-            createStrokeButtons(toggleGroup);
+            ToggleGroup fillToggleGroup = new ToggleGroup();
+            ToggleGroup strokeToggleGroup = new ToggleGroup();
+            createFillButtons(fillToggleGroup);
+            createStrokeButtons(strokeToggleGroup);
             Separator separator = new Separator(Orientation.VERTICAL);
 
             nodeMap = new LinkedHashMap<>();
@@ -118,7 +120,9 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
                 if (fillColorToggleButton.isSelected()) {
                     colorPicker.setDisable(false);
                     colorPicker.show();
-                } else colorPicker.setDisable(true);
+                } else {
+                    colorPicker.setDisable(true);
+                }
             });
             fillGradientToggleButton.setToggleGroup(toggleGroup);
             fillPatternToggleButton.setToggleGroup(toggleGroup);
@@ -136,9 +140,9 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             strokeColorToggleButton.setUserData(strokeColorPicker);
             strokeColorToggleButton.setOnAction(event -> {
                 if (strokeColorToggleButton.isSelected()) {
-                    colorPicker.setDisable(false);
+                    strokeColorPicker.setDisable(false);
                     strokeColorPicker.show();
-                } else colorPicker.setDisable(true);
+                } else strokeColorPicker.setDisable(true);
             });
             strokeGradientToggleButton.setToggleGroup(toggleGroup);
             strokePatternToggleButton.setToggleGroup(toggleGroup);
@@ -163,6 +167,7 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             strokeWidthSpinner.setEditable(true);
             strokeWidthSpinner.setPrefWidth(20);
             strokeWidthSpinner.setValueFactory(new DoubleSpinnerValueFactory(strokeWidthSpinner, valueFactory -> {
+                config.setStrokeWidth(valueFactory.getValue());
                 if (config.getSelectedNode() == null) return;
                 ((Shape) config.getSelectedNode()).setStrokeWidth(valueFactory.getValue());
             }));
@@ -182,7 +187,10 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             Shape canvasActiveNode = (Shape) config.getSelectedNode();
             if (canvasActiveNode == null) return;
             ColorPicker picker = (ColorPicker) toggleButton.getUserData();
-            if (picker == this.colorPicker) canvasActiveNode.setFill(toggleButton.isSelected() ? picker.getValue() : null);
+            if (picker == this.colorPicker) {
+                canvasActiveNode.setFill(toggleButton.isSelected() ? picker.getValue() : null);
+                Logger.getLogger(getClass().getName()).log(Level.INFO, "activeNode = " + canvasActiveNode);
+            }
             else canvasActiveNode.setStroke(toggleButton.isSelected() ? picker.getValue() : null);
         }
 
