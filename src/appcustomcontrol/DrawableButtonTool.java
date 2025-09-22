@@ -5,13 +5,16 @@ import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import com.sun.istack.internal.NotNull;
 import javafx.collections.ObservableList;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
+import javafx.scene.paint.*;
 import javafx.scene.shape.Shape;
 
 import java.util.LinkedHashMap;
@@ -73,7 +76,6 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
         private final GlobalDrawPaneConfig config;
 
         ColorPicker colorPicker;
-        ColorPicker strokeColorPicker;
         ToggleButton fillColorToggleButton;
         ToggleButton fillGradientToggleButton;
         ToggleButton fillPatternToggleButton;
@@ -96,76 +98,76 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             toolsMap.put("fill_stroke_grid", createGridAndFill());
             toolsMap.put("separator", separator);
             nodeMap.put(GLOBAL_NODE_OPTIONS, toolsMap);
-
-            colorPicker.setOnAction(event -> {
-                config.setForegroundColor(colorPicker.getValue());
-                this.setColorPickerOnAction(fillColorToggleButton);
-            });
-            strokeColorPicker.setOnAction(event -> {
-                config.setStrokeColor(strokeColorPicker.getValue());
-                this.setColorPickerOnAction(strokeColorToggleButton);
-            });
         }
 
         private void createFillButtons (ToggleGroup toggleGroup) {
             colorPicker = new ColorPicker(Color.BLACK);
             colorPicker.setPrefSize(BUTTON_WIDTH, 30);
-            fillColorToggleButton = new ToggleButton("Co");
+            fillColorToggleButton = new ToggleButton("fill");
             fillGradientToggleButton = new ToggleButton("Gr");
             fillPatternToggleButton = new ToggleButton("Pa");
 
             fillColorToggleButton.setToggleGroup(toggleGroup);
             fillColorToggleButton.setUserData(colorPicker);
             fillColorToggleButton.setOnAction(event -> {
-                if (fillColorToggleButton.isSelected()) {
-                    colorPicker.setDisable(false);
-                    colorPicker.show();
-                } else {
-                    colorPicker.setDisable(true);
-                }
+                Shape canvasActiveNode = (Shape) config.getSelectedNode();
+                if (canvasActiveNode == null) return;
+                config.setForegroundColor(colorPicker.getValue());
+                canvasActiveNode.setFill(colorPicker.getValue());
             });
             fillGradientToggleButton.setToggleGroup(toggleGroup);
             fillPatternToggleButton.setToggleGroup(toggleGroup);
+            fillPatternToggleButton.setOnAction(event -> {
+                Shape canvasActiveNode = (Shape) config.getSelectedNode();
+                if (canvasActiveNode == null) return;
+                ImagePattern imagePattern = new ImagePattern(new Image("Ui eg.png"));
+                config.setForegroundColor(imagePattern);
+                canvasActiveNode.setFill(imagePattern);
+            });
         }
 
         private void createStrokeButtons (ToggleGroup toggleGroup) {
-            strokeColorPicker = new ColorPicker(Color.BLACK);
-            strokeColorPicker.setPrefSize(BUTTON_WIDTH, 30);
-            strokeColorToggleButton = new ToggleButton("Co");
+            strokeColorToggleButton = new ToggleButton("Stroke");
             strokeColorToggleButton.setSelected(true);
             strokeGradientToggleButton = new ToggleButton("Gr");
             strokePatternToggleButton = new ToggleButton("Pa");
 
             strokeColorToggleButton.setToggleGroup(toggleGroup);
-            strokeColorToggleButton.setUserData(strokeColorPicker);
             strokeColorToggleButton.setOnAction(event -> {
-                if (strokeColorToggleButton.isSelected()) {
-                    strokeColorPicker.setDisable(false);
-                    strokeColorPicker.show();
-                } else strokeColorPicker.setDisable(true);
+                Shape canvasActiveNode = (Shape) config.getSelectedNode();
+                if (canvasActiveNode == null) return;
+                config.setStrokeColor(colorPicker.getValue());
+                canvasActiveNode.setStroke(colorPicker.getValue());
             });
             strokeGradientToggleButton.setToggleGroup(toggleGroup);
+            strokeGradientToggleButton.setOnAction(event -> {
+                Shape canvasActiveNode = (Shape) config.getSelectedNode();
+                if (canvasActiveNode == null) return;
+                Stop[] stops = {new Stop(0, Color.BLACK), new Stop(1, Color.RED)};
+                LinearGradient lg = new LinearGradient(0, 0, 0, 1, true, CycleMethod.REFLECT, stops);
+                config.setStrokeColor(lg);
+                canvasActiveNode.setStroke(lg);
+            });
             strokePatternToggleButton.setToggleGroup(toggleGroup);
         }
 
         private GridPane createGridAndFill () {
             GridPane fillStrokeGrid = new GridPane();
-            fillStrokeGrid.add(new Label("Fill"), 0, 0);
-            fillStrokeGrid.add(colorPicker, 1, 0);
+            fillStrokeGrid.add(colorPicker, 0, 0);
+            Label fillLabel = new Label("Fill");
+            fillStrokeGrid.add(fillLabel, 1, 0);
             fillStrokeGrid.add(fillColorToggleButton, 2, 0);
             fillStrokeGrid.add(fillGradientToggleButton, 3, 0);
             fillStrokeGrid.add(fillPatternToggleButton, 4, 0);
 
             fillStrokeGrid.add(new Label("Stroke"), 0, 1);
-            fillStrokeGrid.add(strokeColorPicker, 1, 1);
-            fillStrokeGrid.add(strokeColorToggleButton, 2, 1);
-            fillStrokeGrid.add(strokeGradientToggleButton, 3, 1);
-            fillStrokeGrid.add(strokePatternToggleButton, 4, 1);
+            fillStrokeGrid.add(strokeColorToggleButton, 1, 1);
+            fillStrokeGrid.add(strokeGradientToggleButton, 2, 1);
+            fillStrokeGrid.add(strokePatternToggleButton, 3, 1);
 
             strokeWidthSpinner = new Spinner<>(0, 10, 1.0, 1);
-            strokeWidthSpinner.getStyleClass().add(Spinner.STYLE_CLASS_SPLIT_ARROWS_VERTICAL);
             strokeWidthSpinner.setEditable(true);
-            strokeWidthSpinner.setPrefWidth(20);
+            strokeWidthSpinner.setPrefWidth(60);
             strokeWidthSpinner.setValueFactory(new DoubleSpinnerValueFactory(strokeWidthSpinner, valueFactory -> {
                 config.setStrokeWidth(valueFactory.getValue());
                 if (config.getSelectedNode() == null) return;
@@ -173,7 +175,8 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             }));
             strokeWidthSpinner.getValueFactory().setValue(1.0);
 
-            fillStrokeGrid.add(strokeWidthSpinner, 5, 0, 1, 2);
+            fillStrokeGrid.add(strokeWidthSpinner, 4, 1, 2, 1);
+            GridPane.setHalignment(fillLabel, HPos.CENTER);
             return fillStrokeGrid;
         }
 

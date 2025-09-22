@@ -216,6 +216,10 @@ public class DrawPane extends StackPane {
         return activeCanvasPane;
     }
 
+    public LinkedHashMap<String, Node> getGlobalPrimaryElements() {
+        return globalPrimaryElements;
+    }
+
     public void setActiveCanvasNode (Node activeNode) {
         this.activeCanvasNode = activeNode;
     }
