@@ -5,6 +5,7 @@ import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import apputil.Icon;
+import shapes.Circle;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
@@ -19,7 +20,6 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.util.StringConverter;
 
@@ -35,7 +35,7 @@ public class CircleButtonTool extends DrawableButtonTool {
     private boolean isDrawing = false;
     private double mouseStartPointX = 0, mouseStartPointY = 0;
     private int shapeCounter = 0;
-    Vector2d radiusVector;
+    private final Vector2d radiusVector;
 
     public CircleButtonTool(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
         super("", config, toolOptionsPanel);

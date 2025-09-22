@@ -35,12 +35,13 @@ public class GraphicsApp extends Application {
         drawingTabbedPane.setTabMaxHeight(Double.MAX_VALUE);
         GlobalDrawPaneConfig drawPaneConfig = GlobalDrawPaneConfig.getInstance();
         AppMenuBar menuBar = new AppMenuBar(drawPaneConfig);
+        menuBar.setDrawingTabbedPane(drawingTabbedPane);
         SubToolsPanel toolOptionsPanel = new SubToolsPanel();
         toolOptionsPanel.setDrawingTabbedPane(drawingTabbedPane);
         ToolsPanel sideToolsPanel = new ToolsPanel(drawPaneConfig, toolOptionsPanel);
         //sideToolsPanel.setTabbedPane(drawingTabbedPane);
         sideToolsPanel.setFocusTraversable(true);
-        menuBar.getConsumer().setTabbedPane(drawingTabbedPane);
+        menuBar.getConsumer().setTabbedPane(drawingTabbedPane); //check this later
 
         /*scene.widthProperty().addListener((observable, oldValue, newValue) -> {
             drawingArea.setPrefWidth((Double) newValue);
