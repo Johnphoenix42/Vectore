@@ -1,23 +1,28 @@
 package models;
 
-import javafx.scene.paint.Paint;
+import javafx.scene.Node;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 
-public class ShapeModel {
+import java.io.Serializable;
+
+public abstract class ShapeModel implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private double x, y;
     private double strokeWidth;
-    private Paint stroke;
-    private Paint fill;
+    private String stroke;
+    private String fill;
 
-    public <T extends Shape> ShapeModel(T shape){}
+    public ShapeModel(Node shape){}
 
     public ShapeModel(double x, double y) {
         this.x = x;
         this.y = y;
     }
+
+    public abstract Shape createShape();
 
     public double getX() {
         return x;
@@ -35,15 +40,27 @@ public class ShapeModel {
         this.y = y;
     }
 
-    public void setFill(Paint fill) {
+    public void setFill(String fill) {
         this.fill = fill;
     }
 
-    public void setStroke(Paint stroke) {
+    public void setStroke(String stroke) {
         this.stroke = stroke;
     }
 
     public void setStrokeWidth(double strokeWidth) {
         this.strokeWidth = strokeWidth;
+    }
+
+    public String getStroke() {
+        return stroke;
+    }
+
+    public String getFill() {
+        return fill;
+    }
+
+    public double getStrokeWidth() {
+        return strokeWidth;
     }
 }

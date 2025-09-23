@@ -1,5 +1,6 @@
 package models;
 
+import javafx.scene.Node;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Shape;
 
@@ -9,24 +10,35 @@ public class Rectangle extends ShapeModel implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private double x, y;
     private double width, height;
-    private Paint fill;
-    private Paint stroke;
 
-    public <T extends Shape> Rectangle(T rectangle) {
-        super((javafx.scene.shape.Rectangle) rectangle);
+    public Rectangle(Node rectangle) {
+        super(rectangle);
         javafx.scene.shape.Rectangle rectangleShape = (javafx.scene.shape.Rectangle) rectangle;
         setX(rectangleShape.getX());
         setY(rectangleShape.getY());
         setWidth(rectangleShape.getWidth());
         setHeight(rectangleShape.getHeight());
+        setFill(rectangleShape.getFill().toString());
+        setStroke(rectangleShape.getStroke().toString());
+        setStrokeWidth(rectangleShape.getStrokeWidth());
     }
 
     public Rectangle(double x, double y) {
         super(x, y);
-        this.x = x;
-        this.y = y;
+    }
+
+    @Override
+    public Shape createShape() {
+        javafx.scene.shape.Rectangle rect = new javafx.scene.shape.Rectangle();
+        rect.setX(getX());
+        rect.setY(getY());
+        rect.setWidth(getWidth());
+        rect.setHeight(getHeight());
+        rect.setFill(Paint.valueOf(getFill()));
+        rect.setStroke(Paint.valueOf(getStroke()));
+        rect.setStrokeWidth(getStrokeWidth());
+        return rect;
     }
 
     public Rectangle() {
@@ -39,14 +51,6 @@ public class Rectangle extends ShapeModel implements Serializable {
 
     public void setHeight(double height) {
         this.height = height;
-    }
-
-    public double getX() {
-        return x;
-    }
-
-    public double getY() {
-        return y;
     }
 
     public double getWidth() {

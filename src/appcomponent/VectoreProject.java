@@ -1,6 +1,6 @@
 package appcomponent;
 
-import javafx.scene.Node;
+import models.ShapeModel;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 public class VectoreProject implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final LinkedHashMap<String, Node> canvasElementsList = new LinkedHashMap<>();
+    private final LinkedHashMap<String, ShapeModel> canvasElementsList = new LinkedHashMap<>();
 
     private final String projectName;
     private int width, height;
@@ -48,7 +48,7 @@ public class VectoreProject implements Serializable {
         return none;
     }
 
-    public LinkedHashMap<String, Node> getCanvasElementsList() {
+    public LinkedHashMap<String, ShapeModel> getCanvasElementsList() {
         return canvasElementsList;
     }
 }
