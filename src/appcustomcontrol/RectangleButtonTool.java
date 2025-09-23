@@ -5,7 +5,6 @@ import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import apputil.Icon;
-import shapes.Rectangle;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
@@ -95,8 +94,8 @@ public class RectangleButtonTool extends DrawableButtonTool {
 
             anchors[0] = createAnchorPoint(ev.getX(), ev.getY(), 0, renderTree);
         }else {
-            activeRectangle.setRectX(Math.min(mouseStartPointX, ev.getX()));
-            activeRectangle.setRectY(Math.min(mouseStartPointY, ev.getY()));
+            activeRectangle.setX(Math.min(mouseStartPointX, ev.getX()));
+            activeRectangle.setY(Math.min(mouseStartPointY, ev.getY()));
             activeRectangle.setWidth(Math.abs(mouseStartPointX - ev.getX()));
             activeRectangle.setHeight(Math.abs(mouseStartPointY - ev.getY()));
 
@@ -119,8 +118,8 @@ public class RectangleButtonTool extends DrawableButtonTool {
         rectangle.setId(SHAPE_NAMESPACE + shapeCounter);
         boolean shouldFill = optionButtonsBuilder.fillColorToggleButton.isSelected();
         rectangle.setFill(shouldFill ? config.getForegroundColor() : null);
-        rectangle.setRectX(mouseStartPointX);
-        rectangle.setRectY(mouseStartPointY);
+        rectangle.setX(mouseStartPointX);
+        rectangle.setY(mouseStartPointY);
         rectangle.setStrokeWidth(config.getStrokeWidth());
         boolean shouldStroke = optionButtonsBuilder.strokeColorToggleButton.isSelected();
         rectangle.setStroke(shouldStroke ? super.config.getStrokeColor() : null);
@@ -163,16 +162,16 @@ public class RectangleButtonTool extends DrawableButtonTool {
             if (anchorCounter == 0) {
                 anchor.setCenterX(eventX);
                 anchor.setCenterY(eventY);
-                activeRectangle.setRectX(eventX);
-                activeRectangle.setRectY(eventY);
+                activeRectangle.setX(eventX);
+                activeRectangle.setY(eventY);
                 //Circle anchor2 = (Circle) nodeTree.get(SECONDARY).get("point_" + shapeCounter + "_" + 1);
                 anchors[1].setCenterX(activeRectangle.getX() + activeRectangle.getWidth());
                 anchors[1].setCenterY(activeRectangle.getY() + activeRectangle.getHeight());
             } else {
                 anchor.setCenterX(Math.max(eventX, activeRectangle.getX()));
                 anchor.setCenterY(Math.max(eventY, activeRectangle.getY()));
-                activeRectangle.setRectWidth(anchor.getCenterX() - activeRectangle.getRectX());
-                activeRectangle.setRectHeight(anchor.getCenterY() - activeRectangle.getY());
+                activeRectangle.setWidth(anchor.getCenterX() - activeRectangle.getX());
+                activeRectangle.setHeight(anchor.getCenterY() - activeRectangle.getY());
             }
             event.consume();
         });
@@ -186,10 +185,10 @@ public class RectangleButtonTool extends DrawableButtonTool {
 
     private void drawOnMouseMoved(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
         if (!isDrawing) return;
-        activeRectangle.setRectX(Math.min(mouseStartPointX, event.getX()));
-        activeRectangle.setRectY(Math.min(mouseStartPointY, event.getY()));
-        activeRectangle.setRectWidth(Math.abs(mouseStartPointX - event.getX()));
-        activeRectangle.setRectHeight(Math.abs(mouseStartPointY - event.getY()));
+        activeRectangle.setX(Math.min(mouseStartPointX, event.getX()));
+        activeRectangle.setY(Math.min(mouseStartPointY, event.getY()));
+        activeRectangle.setWidth(Math.abs(mouseStartPointX - event.getX()));
+        activeRectangle.setHeight(Math.abs(mouseStartPointY - event.getY()));
 
         Node widthSpinner = getOptions().getWidthSpinner();
         ((Spinner<Double>) widthSpinner).getValueFactory().setValue(activeRectangle.getWidth());
@@ -201,10 +200,10 @@ public class RectangleButtonTool extends DrawableButtonTool {
 
     private void drawOnMouseDragged(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {
         if (!isDrawing) return;
-        activeRectangle.setRectX(Math.min(mouseStartPointX, event.getX()));
-        activeRectangle.setRectY(Math.min(mouseStartPointY, event.getY()));
-        activeRectangle.setRectWidth(Math.abs(mouseStartPointX - event.getX()));
-        activeRectangle.setRectHeight(Math.abs(mouseStartPointY - event.getY()));
+        activeRectangle.setX(Math.min(mouseStartPointX, event.getX()));
+        activeRectangle.setY(Math.min(mouseStartPointY, event.getY()));
+        activeRectangle.setWidth(Math.abs(mouseStartPointX - event.getX()));
+        activeRectangle.setHeight(Math.abs(mouseStartPointY - event.getY()));
     }
 
     private void drawOnMouseReleased(MouseEvent event, TreeMap<String, LinkedHashMap<String, Node>> renderTree) {

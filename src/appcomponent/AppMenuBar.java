@@ -18,13 +18,17 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Shape;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
-import shapes.Rectangle;
+import models.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,7 +42,11 @@ public class AppMenuBar extends MenuBar {
     public AppMenuBar(GlobalDrawPaneConfig config){
         super();
         this.globalConfig = config;
-
+        LinkedHashMap<String, Shape> systemShapes = new LinkedHashMap<>();
+        LinkedHashMap<String, ShapeModel> shapeModels = new LinkedHashMap<>();
+        systemShapes.put("rect_0", new javafx.scene.shape.Rectangle(10, 10, 50, 50));
+        mapShapesToModels(systemShapes, shapeModels);
+        System.out.println(shapeModels);
         menuTreeMap.put("File", new LinkedHashMap<>());
         menuTreeMap.put("Edit", new LinkedHashMap<>());
         menuTreeMap.put("Help", new LinkedHashMap<>());
@@ -104,7 +112,7 @@ public class AppMenuBar extends MenuBar {
                 while (true) {
                     VectoreProject vectoreProject = (VectoreProject) objectInputStream.readObject();
                     LinkedHashMap<String, Node> elementsList = vectoreProject.getCanvasElementsList();
-                    System.out.println(((Rectangle) elementsList.get("rectangle_0")));
+                    System.out.println(elementsList.get("rectangle_0"));
                     /*((Rectangle) elementsList.get("rectangle_0")).setRectHeight(100);*/
 
                     final DrawPane drawingArea = new DrawPane(globalConfig, 500, 200);
@@ -176,6 +184,21 @@ public class AppMenuBar extends MenuBar {
                 }
             }
         });
+    }
+
+    private static <T extends Shape, R extends ShapeModel> void mapShapesToModels(LinkedHashMap<String, T> from, LinkedHashMap<String, ShapeModel> to) {
+        HashMap<String, Function<T, ? extends ShapeModel>> constructorMap = new HashMap<>();
+        constructorMap.put("Rectangle", Rectangle::new);
+        constructorMap.put("Circle", Circle::new);
+        constructorMap.put("Path", Path::new);
+        constructorMap.put("Text", Text::new);
+
+        for (Map.Entry<String, T> entry: from.entrySet()) {
+            T shape = entry.getValue();
+            Function<T, ? extends ShapeModel> constructor = constructorMap.get(shape.getClass().getSimpleName());
+            ShapeModel shapeModel = to.getOrDefault(entry.getKey(), constructor.apply(shape));
+            System.out.println(shapeModel.getX());
+        }
     }
 
     private void createAndShowPopup(){

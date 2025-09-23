@@ -5,7 +5,6 @@ import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import apputil.Icon;
-import shapes.Circle;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
@@ -20,6 +19,7 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.util.StringConverter;
 
