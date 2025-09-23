@@ -5,7 +5,6 @@ import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import apputil.Icon;
-import shapes.Path;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventType;

@@ -18,13 +18,15 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Shape;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
-import shapes.Rectangle;
+import models.*;
 
 import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,7 +40,9 @@ public class AppMenuBar extends MenuBar {
     public AppMenuBar(GlobalDrawPaneConfig config){
         super();
         this.globalConfig = config;
-
+        /*LinkedHashMap<String, Node> systemShapes = new LinkedHashMap<>();
+        LinkedHashMap<String, ShapeModel> shapeModels = new LinkedHashMap<>();
+        systemShapes.put("rect_0", new javafx.scene.shape.Rectangle(10, 12, 50, 50));*/
         menuTreeMap.put("File", new LinkedHashMap<>());
         menuTreeMap.put("Edit", new LinkedHashMap<>());
         menuTreeMap.put("Help", new LinkedHashMap<>());
@@ -103,13 +107,13 @@ public class AppMenuBar extends MenuBar {
                 }
                 while (true) {
                     VectoreProject vectoreProject = (VectoreProject) objectInputStream.readObject();
-                    LinkedHashMap<String, Node> elementsList = vectoreProject.getCanvasElementsList();
-                    System.out.println(((Rectangle) elementsList.get("rectangle_0")));
-                    /*((Rectangle) elementsList.get("rectangle_0")).setRectHeight(100);*/
+                    LinkedHashMap<String, ShapeModel> elementsList = vectoreProject.getCanvasElementsList();
+                    System.out.println(elementsList.get("rectangle_0"));
 
                     final DrawPane drawingArea = new DrawPane(globalConfig, 500, 200);
                     LinkedHashMap<String, LinkedHashMap<String, Node>> canvasTree = new LinkedHashMap<>();
-                    canvasTree.put(DrawableButtonTool.PRIMARY, elementsList);
+                    AppMenuBar.mapModelsToShapes(elementsList, drawingArea.getGlobalPrimaryElements());
+                    canvasTree.put(DrawableButtonTool.PRIMARY, drawingArea.getGlobalPrimaryElements());
                     drawingArea.setFocusTraversable(true);
                     Pane canvasPane = drawingArea.createCanvas(vectoreProject.getWidth(), vectoreProject.getHeight());
                     drawingArea.getChildren().add(canvasPane);
@@ -142,6 +146,15 @@ public class AppMenuBar extends MenuBar {
         });
     }
 
+    private static void mapModelsToShapes(LinkedHashMap<String, ShapeModel> from, LinkedHashMap<String, Node> to) {
+        for (Map.Entry<String, ShapeModel> entry: from.entrySet()) {
+            ShapeModel shapeModel = entry.getValue();
+            Shape shape = shapeModel.createShape();
+            to.put(entry.getKey(), shape);
+            System.out.println(shape);
+        }
+    }
+
     private void saveProject(MenuItem menuItem) {
         menuItem.setAccelerator(KeyCombination.keyCombination("Shortcut+S"));
 
@@ -158,7 +171,8 @@ public class AppMenuBar extends MenuBar {
                 objectOutputStream = new ObjectOutputStream(new FileOutputStream(savedFile));
                 VectoreProject vectoreProject = consumer.getVectoreProject();
                 DrawPane drawingPane = (DrawPane) drawingTabbedPane.getSelectionModel().getSelectedItem().getContent();
-                vectoreProject.getCanvasElementsList().putAll(drawingPane.getGlobalPrimaryElements());
+                //vectoreProject.getCanvasElementsList().putAll(drawingPane.getGlobalPrimaryElements());
+                mapShapesToModels(drawingPane.getGlobalPrimaryElements(), vectoreProject.getCanvasElementsList());
                 objectOutputStream.writeObject(vectoreProject);
             } catch (FileNotFoundException e) {
                 Logger.getLogger(getClass().getName()).log(Level.SEVERE, ">> No file found");
@@ -176,6 +190,21 @@ public class AppMenuBar extends MenuBar {
                 }
             }
         });
+    }
+
+    private static void mapShapesToModels(LinkedHashMap<String, Node> from, LinkedHashMap<String, ShapeModel> to) {
+        HashMap<String, Function<Node, ShapeModel>> constructorMap = new HashMap<>();
+        constructorMap.put("Rectangle", Rectangle::new);
+        constructorMap.put("Circle", Circle::new);
+        constructorMap.put("Path", Path::new);
+        constructorMap.put("Text", Text::new);
+
+        for (Map.Entry<String, Node> entry: from.entrySet()) {
+            Node shape = entry.getValue();
+            Function<Node, ShapeModel> constructor = constructorMap.get(shape.getClass().getSimpleName());
+            ShapeModel shapeModel = to.getOrDefault(entry.getKey(), constructor.apply(shape));
+            to.put(entry.getKey(), shapeModel);
+        }
     }
 
     private void createAndShowPopup(){
