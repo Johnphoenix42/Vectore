@@ -5,6 +5,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 public abstract class ShapeModel implements Serializable {
 
@@ -56,8 +57,8 @@ public abstract class ShapeModel implements Serializable {
         return stroke;
     }
 
-    public String getFill() {
-        return fill;
+    public Optional<String> getFill() {
+        return Optional.ofNullable(fill);
     }
 
     public double getStrokeWidth() {

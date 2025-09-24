@@ -5,6 +5,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Shape;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 public class Rectangle extends ShapeModel implements Serializable {
 
@@ -14,12 +15,13 @@ public class Rectangle extends ShapeModel implements Serializable {
 
     public Rectangle(Node rectangle) {
         super(rectangle);
+        //serializing
         javafx.scene.shape.Rectangle rectangleShape = (javafx.scene.shape.Rectangle) rectangle;
         setX(rectangleShape.getX());
         setY(rectangleShape.getY());
         setWidth(rectangleShape.getWidth());
         setHeight(rectangleShape.getHeight());
-        setFill(rectangleShape.getFill().toString());
+        Optional.ofNullable(rectangleShape.getFill()).ifPresent(fill -> setFill(fill.toString()));
         setStroke(rectangleShape.getStroke().toString());
         setStrokeWidth(rectangleShape.getStrokeWidth());
     }
@@ -30,12 +32,13 @@ public class Rectangle extends ShapeModel implements Serializable {
 
     @Override
     public Shape createShape() {
+        //deserializing
         javafx.scene.shape.Rectangle rect = new javafx.scene.shape.Rectangle();
         rect.setX(getX());
         rect.setY(getY());
         rect.setWidth(getWidth());
         rect.setHeight(getHeight());
-        rect.setFill(Paint.valueOf(getFill()));
+        getFill().ifPresent(fill -> rect.setFill(Paint.valueOf(fill)));
         rect.setStroke(Paint.valueOf(getStroke()));
         rect.setStrokeWidth(getStrokeWidth());
         return rect;
