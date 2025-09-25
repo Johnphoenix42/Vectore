@@ -1,10 +1,12 @@
 package appcustomcontrol;
 
+import appcomponent.DrawPane;
 import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import com.sun.istack.internal.NotNull;
 import javafx.collections.ObservableList;
+import javafx.event.EventType;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -13,8 +15,12 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
+import javafx.scene.input.InputEvent;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Shape;
 
 import java.util.LinkedHashMap;
@@ -68,6 +74,39 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
     public abstract OptionButtonsBuilder getOptions();
 
     public abstract void setCurrentToolbarOptions(DrawableButtonTool tool);
+
+
+    public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> draw(EventType<T> eventType, T ev) {
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
+        if (eventType == KeyEvent.KEY_PRESSED) {
+            DrawPane drawingPane = ((DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent());
+            if (((KeyEvent)ev).isControlDown()) {
+                if (drawingPane.getXCanvasPos() > 195 && drawingPane.getXCanvasPos() < 205) {
+                    Line vLine = new Line(200, 0, 200, 200);
+                    renderTree.get(SECONDARY).put("v_guide_line", vLine);
+                }
+            }
+        }
+        return renderTree;
+    }
+
+    public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T ev) {
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
+        if (eventType == KeyEvent.KEY_RELEASED) {
+            DrawPane drawingPane = ((DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent());
+            if (((KeyEvent)ev).isControlDown()) {
+                if (drawingPane.getXCanvasPos() > 195 && drawingPane.getXCanvasPos() < 205) {
+                    Line vLine = new Line(200, 0, 200, 200);
+                    renderTree.get(SECONDARY).put("v_guide_line", vLine);
+                }
+            }
+        }
+        return renderTree;
+    }
 
     public static class OptionButtonsBuilder{
         public static final String GLOBAL_NODE_OPTIONS = "static";

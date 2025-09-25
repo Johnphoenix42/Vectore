@@ -1,7 +1,6 @@
 package models;
 
 import appcomponent.SVGTagMaker;
-import com.sun.javafx.geom.Path2D;
 import javafx.scene.Node;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.*;
@@ -47,15 +46,13 @@ public class Path extends ShapeModel implements Serializable {
         getFill().ifPresent(fill -> path.setFill(Paint.valueOf(fill)));
         path.setStroke(Paint.valueOf(getStroke()));
         path.setStrokeWidth(getStrokeWidth());
-        Path2D path2D = new Path2D();
-        //path2D.getPathIterator(BaseTransform.IDENTITY_TRANSFORM).currentSegment();
-        System.out.println("Setting up pattern");
+        /*Path2D path2D = new Path2D();
+        //path2D.getPathIterator(BaseTransform.IDENTITY_TRANSFORM).currentSegment();*/
         Pattern pattern = Pattern.compile("d=\"(.*?)\"");
         Matcher matcher = pattern.matcher(pathData);
         boolean found = matcher.find();
         if(!found) return path;
         String firstGroupString = matcher.group(1);
-        System.out.println(firstGroupString);
         pattern = Pattern.compile("[a-zA-Z][^a-zA-Z]*");
         matcher = pattern.matcher(firstGroupString);
         while(matcher.find()){
@@ -64,6 +61,13 @@ public class Path extends ShapeModel implements Serializable {
         return path;
     }
 
+    /**
+     * Maps svg path data directive with their corresponding PathElement which it returns. Only the
+     * relative directives are accounted for right now. Yes. It means this method is garbage the moment
+     * anybody tries to load in a svg data containing absolute directives.
+     * @param data the contents of "d" in <path d="M23, 34l43,43z"
+     * @return an appropriate PathElement
+     */
     private PathElement createPathElement(String data) {
         Pattern pattern = Pattern.compile("\\d+");
         Matcher matcher = pattern.matcher(data);
@@ -75,6 +79,8 @@ public class Path extends ShapeModel implements Serializable {
             }
             if (Stream.of('M', 'm').anyMatch(c -> c == data.charAt(0))) return new MoveTo(values[0], values[1]);
             else if (data.charAt(0) == 'l') return new LineTo(values[0], values[1]);
+            else if (data.charAt(0) == 'v') return new VLineTo(values[0]);
+            else if (data.charAt(0) == 'h') return new HLineTo(values[0]);
             else if (data.charAt(0) == 'q') return new QuadCurveTo(values[0], values[1], values[2], values[3]);
             else if (data.charAt(0) == 'c')
                 return new CubicCurveTo(values[0], values[1], values[2], values[3], values[4], values[5]);

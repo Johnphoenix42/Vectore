@@ -169,8 +169,8 @@ public class CircleButtonTool extends DrawableButtonTool {
     }
 
     @Override
-    public <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
-        return null;
+    public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
+        return super.unDraw(eventType, event);
     }
 
     @Override

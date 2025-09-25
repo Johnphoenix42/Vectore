@@ -290,7 +290,7 @@ public class TextButtonTool extends DrawableButtonTool {
     }
 
     @Override
-    public <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
+    public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
         //Keep in mind that the draw method will run before this one. That means booleans can be weird here.
          if (eventType == MouseEvent.MOUSE_PRESSED) {
             TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();

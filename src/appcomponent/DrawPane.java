@@ -27,6 +27,7 @@ public class DrawPane extends StackPane {
     private Pane activeCanvasPane; // the active canvas we are using. This can change when we work with multiple tabs.
     private Node activeCanvasNode = null; // the node on the canvas currently being manipulated
     private Text mouseCoordinateText;
+    private double xCanvasPos, yCanvasPos;
 
     public DrawPane(GlobalDrawPaneConfig config, double width, double height){
         super();
@@ -168,9 +169,11 @@ public class DrawPane extends StackPane {
     }
 
     private void setMouseCoordinates(MouseEvent event) {
-        String xPos = String.valueOf((int) event.getX());
-        String yPos = String.valueOf((int) event.getY());
-        mouseCoordinateText.setText("X: " + xPos + ", Y: " + yPos);
+        xCanvasPos = event.getX();
+        yCanvasPos = event.getY();
+        String xPosString = String.valueOf((int) xCanvasPos);
+        String yPosString = String.valueOf((int) yCanvasPos);
+        mouseCoordinateText.setText("X: " + xPosString + ", Y: " + yPosString);
     }
 
     public void removeSecondaryNodeFromShapes(Map<String, LinkedHashMap<String, Node>> unDrawNodeTree) {
@@ -218,6 +221,14 @@ public class DrawPane extends StackPane {
 
     public LinkedHashMap<String, Node> getGlobalPrimaryElements() {
         return globalPrimaryElements;
+    }
+
+    public double getXCanvasPos() {
+        return xCanvasPos;
+    }
+
+    public double getYCanvasPos() {
+        return yCanvasPos;
     }
 
     public void setActiveCanvasNode (Node activeNode) {
