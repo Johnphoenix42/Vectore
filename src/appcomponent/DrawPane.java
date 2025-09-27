@@ -16,9 +16,7 @@ import javafx.scene.shape.Path;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class DrawPane extends StackPane {
 
@@ -27,6 +25,7 @@ public class DrawPane extends StackPane {
     private Pane activeCanvasPane; // the active canvas we are using. This can change when we work with multiple tabs.
     private Node activeCanvasNode = null; // the node on the canvas currently being manipulated
     private Text mouseCoordinateText;
+    private HashMap<String, ArrayList<Double>> activeGridCoordinates;
     private double xCanvasPos, yCanvasPos;
 
     public DrawPane(GlobalDrawPaneConfig config, double width, double height){
@@ -47,6 +46,7 @@ public class DrawPane extends StackPane {
         canvasPane.setClip(new Rectangle(width, height));
         canvasPane.setFocusTraversable(true);
         canvasPane.requestFocus();
+        activeGridCoordinates = Grids.NO_GRID.computeCoordinates(width, height);
         this.activeCanvasPane = canvasPane;
         return canvasPane;
     }
@@ -165,7 +165,10 @@ public class DrawPane extends StackPane {
             renderNodes(canvasPane, KeyEvent.KEY_TYPED, event);
             unRenderNodes(canvasPane, KeyEvent.KEY_TYPED, event);
         });
-
+        canvasPane.addEventHandler(KeyEvent.KEY_RELEASED, event -> {
+            renderNodes(canvasPane, KeyEvent.KEY_RELEASED, event);
+            unRenderNodes(canvasPane, KeyEvent.KEY_RELEASED, event);
+        });
     }
 
     private void setMouseCoordinates(MouseEvent event) {
@@ -237,6 +240,14 @@ public class DrawPane extends StackPane {
 
     public Node getActiveCanvasNode(){
         return activeCanvasNode;
+    }
+
+    public HashMap<String, ArrayList<Double>> getActiveGridCoordinates() {
+        return activeGridCoordinates;
+    }
+
+    public void setActiveGridCoordinates(HashMap<String, ArrayList<Double>> activeGridCoordinates) {
+        this.activeGridCoordinates = activeGridCoordinates;
     }
 
     public enum CanvasActionMode {

@@ -40,26 +40,35 @@ public class AppMenuBar extends MenuBar {
     public AppMenuBar(GlobalDrawPaneConfig config){
         super();
         this.globalConfig = config;
-        /*LinkedHashMap<String, Node> systemShapes = new LinkedHashMap<>();
-        LinkedHashMap<String, ShapeModel> shapeModels = new LinkedHashMap<>();
-        systemShapes.put("rect_0", new javafx.scene.shape.Rectangle(10, 12, 50, 50));*/
         menuTreeMap.put("File", new LinkedHashMap<>());
         menuTreeMap.put("Edit", new LinkedHashMap<>());
+        menuTreeMap.put("View", new LinkedHashMap<>());
         menuTreeMap.put("Help", new LinkedHashMap<>());
         populateFileMap();
+        menuTreeMap.get("View").put("Grid", new MenuItem[]{new MenuItem("None"), new MenuItem("2x2")});
 
         HashMap<String, Consumer<MenuItem>> methRef = new HashMap<>();
         methRef.put("New", this::createNewProject);
         methRef.put("Open", this::openFileChooser);
-        methRef.put("Recent", menuItem -> menuItem.setOnAction(e -> System.out.println("Recent menu pressed")));
+        methRef.put("Recent", menuItem -> menuItem.setOnAction(e -> {
+            Grids activeGrid = Grids.GRID_2x2;
+            activeGrid.computeCoordinates(consumer.getVectoreProject().getWidth(), getConsumer().getVectoreProject().getHeight());
+        }));
         methRef.put("Save", this::saveProject);
         methRef.put("Exit", menuItem -> menuItem.setOnAction(e -> System.exit(0)));
+        methRef.put("Grid", menuItem -> menuItem.setOnAction(e -> {
+            Grids activeGrid = Grids.GRID_2x2;
+            try {
+                DrawPane drawingArea = (DrawPane) drawingTabbedPane.getSelectionModel().getSelectedItem().getContent();
+                drawingArea.setActiveGridCoordinates(activeGrid.computeCoordinates(consumer.getVectoreProject().getWidth(), getConsumer().getVectoreProject().getHeight()));
+            } catch (NullPointerException ex) {
+                System.err.println(ex.getMessage());
+            }
+        }));
 
-        Set<Map.Entry<String, LinkedHashMap<String, MenuItem[]>>> firstLevelEntries =  menuTreeMap.entrySet();
-        for(Map.Entry<String, LinkedHashMap<String, MenuItem[]>> firstLevelEntry : firstLevelEntries){
+        for(Map.Entry<String, LinkedHashMap<String, MenuItem[]>> firstLevelEntry : menuTreeMap.entrySet()){
             Menu menu = new Menu(firstLevelEntry.getKey());
-            Set<Map.Entry<String, MenuItem[]>> secondLevelEntries =  firstLevelEntry.getValue().entrySet();
-            for(Map.Entry<String, MenuItem[]> secondLevelEntry : secondLevelEntries){
+            for(Map.Entry<String, MenuItem[]> secondLevelEntry : firstLevelEntry.getValue().entrySet()){
                 String menuName = secondLevelEntry.getKey();
                 MenuItem menuItem = new MenuItem(menuName);
                 MenuItem[] subMenus = secondLevelEntry.getValue();
@@ -105,29 +114,27 @@ public class AppMenuBar extends MenuBar {
                 if (consumer == null) {
                     consumer = new NewProjectModelConsumer(globalConfig);
                 }
-                while (true) {
-                    VectoreProject vectoreProject = (VectoreProject) objectInputStream.readObject();
-                    LinkedHashMap<String, ShapeModel> elementsList = vectoreProject.getCanvasElementsList();
-                    System.out.println(elementsList.get("rectangle_0"));
+                VectoreProject vectoreProject = (VectoreProject) objectInputStream.readObject();
+                LinkedHashMap<String, ShapeModel> elementsList = vectoreProject.getCanvasElementsList();
 
-                    final DrawPane drawingArea = new DrawPane(globalConfig, 500, 200);
-                    LinkedHashMap<String, LinkedHashMap<String, Node>> canvasTree = new LinkedHashMap<>();
-                    AppMenuBar.mapModelsToShapes(elementsList, drawingArea.getGlobalPrimaryElements());
-                    canvasTree.put(DrawableButtonTool.PRIMARY, drawingArea.getGlobalPrimaryElements());
-                    drawingArea.setFocusTraversable(true);
-                    Pane canvasPane = drawingArea.createCanvas(vectoreProject.getWidth(), vectoreProject.getHeight());
-                    drawingArea.getChildren().add(canvasPane);
-                    drawingArea.addCoordinateText();
-                    drawingArea.foreignRender(canvasTree);
-                    drawingArea.addEventListeners(canvasPane);
-                    if (drawingTabbedPane != null) {
-                        Tab tab = new Tab(openedFile.getName(), drawingArea);
-                        drawingTabbedPane.getTabs().add(tab);
-                        drawingTabbedPane.getSelectionModel().select(tab);
-                    }
-                    GlobalDrawPaneConfig newConfig = (GlobalDrawPaneConfig) objectInputStream.readObject();
-                    globalConfig.setSelectedNode(newConfig.getSelectedNode());
+                final DrawPane drawingArea = new DrawPane(globalConfig, 500, 200);
+                LinkedHashMap<String, LinkedHashMap<String, Node>> canvasTree = new LinkedHashMap<>();
+                AppMenuBar.mapModelsToShapes(elementsList, drawingArea.getGlobalPrimaryElements());
+                canvasTree.put(DrawableButtonTool.PRIMARY, drawingArea.getGlobalPrimaryElements());
+                drawingArea.setFocusTraversable(true);
+                Pane canvasPane = drawingArea.createCanvas(vectoreProject.getWidth(), vectoreProject.getHeight());
+                canvasPane.setFocusTraversable(true);
+                drawingArea.getChildren().add(canvasPane);
+                drawingArea.addCoordinateText();
+                drawingArea.foreignRender(canvasTree);
+                drawingArea.addEventListeners(canvasPane);
+                if (drawingTabbedPane != null) {
+                    Tab tab = new Tab(openedFile.getName(), drawingArea);
+                    drawingTabbedPane.getTabs().add(tab);
+                    drawingTabbedPane.getSelectionModel().select(tab);
                 }
+                GlobalDrawPaneConfig newConfig = (GlobalDrawPaneConfig) objectInputStream.readObject();
+                globalConfig.setSelectedNode(newConfig.getSelectedNode());
             } catch (EOFException e) {
                 System.out.println("File has been read into program");
             } catch (IOException | NullPointerException e) {
@@ -226,6 +233,7 @@ public class AppMenuBar extends MenuBar {
         ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         Dialog<VectoreProject> dialog = new Dialog<>();
+        dialog.setTitle("New Project");
         dialog.setHeaderText("Create new Project");
         ObservableList<ButtonType> buttonTypeList = dialog.getDialogPane().getButtonTypes();
         buttonTypeList.add(cancelButtonType);

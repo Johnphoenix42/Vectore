@@ -10,19 +10,18 @@ import javafx.event.EventType;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Shape;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -81,11 +80,24 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
         renderTree.put(PRIMARY, new LinkedHashMap<>());
         renderTree.put(SECONDARY, new LinkedHashMap<>());
         if (eventType == KeyEvent.KEY_PRESSED) {
-            DrawPane drawingPane = ((DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent());
-            if (((KeyEvent)ev).isControlDown()) {
-                if (drawingPane.getXCanvasPos() > 195 && drawingPane.getXCanvasPos() < 205) {
-                    Line vLine = new Line(200, 0, 200, 200);
-                    renderTree.get(SECONDARY).put("v_guide_line", vLine);
+            if(((KeyEvent)ev).isControlDown()) {
+                DrawPane drawingPane = ((DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent());
+                if (drawingPane != null) {
+                    //drawingPane.getActiveGridCoordinates().get("x").stream().reduce((e, f) -> e - f);
+                    for (double x : drawingPane.getActiveGridCoordinates().getOrDefault("x", new ArrayList<>())) {
+                        if (drawingPane.getXCanvasPos() < x - 3 && drawingPane.getXCanvasPos() > x + 3) continue;
+                        Line vLine = new Line(x, 0, x, 400);
+                        vLine.setStroke(Color.GRAY);
+                        vLine = (Line) nodeTree.get(SECONDARY).putIfAbsent("v_guide_line", vLine);
+                        renderTree.get(SECONDARY).put("v_guide_line", vLine);
+                    }
+                    for (double y : drawingPane.getActiveGridCoordinates().getOrDefault("y", new ArrayList<>())) {
+                        if (drawingPane.getYCanvasPos() < y - 3 && drawingPane.getYCanvasPos() > y + 3) continue;
+                        Line hLine = new Line(0, y, 400, y);
+                        hLine.setStroke(Color.GRAY);
+                        hLine = (Line) nodeTree.get(SECONDARY).putIfAbsent("h_guide_line", hLine);
+                        renderTree.get(SECONDARY).put("h_guide_line", hLine);
+                    }
                 }
             }
         }
@@ -96,13 +108,13 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
         TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
         renderTree.put(PRIMARY, new LinkedHashMap<>());
         renderTree.put(SECONDARY, new LinkedHashMap<>());
+
         if (eventType == KeyEvent.KEY_RELEASED) {
-            DrawPane drawingPane = ((DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent());
-            if (((KeyEvent)ev).isControlDown()) {
-                if (drawingPane.getXCanvasPos() > 195 && drawingPane.getXCanvasPos() < 205) {
-                    Line vLine = new Line(200, 0, 200, 200);
-                    renderTree.get(SECONDARY).put("v_guide_line", vLine);
-                }
+            if (!((KeyEvent)ev).isControlDown()) {
+                Line vLine = (Line) nodeTree.get(SECONDARY).get("v_guide_line");
+                if (vLine != null) renderTree.get(SECONDARY).put("v_guide_line", vLine);
+                Line hLine = (Line) nodeTree.get(SECONDARY).get("h_guide_line");
+                if (hLine != null) renderTree.get(SECONDARY).put("h_guide_line", hLine);
             }
         }
         return renderTree;

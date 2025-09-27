@@ -50,9 +50,7 @@ public class RectangleButtonTool extends DrawableButtonTool {
 
     @Override
     public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> draw(EventType<T> eventType, T ev) {
-        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
-        renderTree.put(PRIMARY, new LinkedHashMap<>());
-        renderTree.put(SECONDARY, new LinkedHashMap<>());
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = super.draw(eventType, ev);
         if (eventType == MouseEvent.MOUSE_PRESSED) {
             drawOnMousePressed((MouseEvent) ev, renderTree);
         } else if (eventType == MouseEvent.MOUSE_MOVED){
@@ -69,13 +67,7 @@ public class RectangleButtonTool extends DrawableButtonTool {
     @Override
     public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
         //Keep in mind that the draw method will run before this one. That means booleans can be weird here.
-        if (eventType == MouseEvent.MOUSE_PRESSED) {
-            TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
-            renderTree.put(PRIMARY, new LinkedHashMap<>());
-            renderTree.put(SECONDARY, new LinkedHashMap<>());
-            return renderTree;
-        }
-        return null;
+        return super.unDraw(eventType, event);
     }
 
     private void drawOnMousePressed(MouseEvent ev, TreeMap<String, LinkedHashMap<String, Node>> renderTree){

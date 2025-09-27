@@ -38,10 +38,12 @@ public class NewProjectModelConsumer implements Consumer<VectoreProject> {
         final DrawPane drawingArea = new DrawPane(this.config, 500, 200);
         drawingArea.setFocusTraversable(true);
         Pane canvasPane = drawingArea.createCanvas(vectoreProject.getWidth(), vectoreProject.getHeight());
+        canvasPane.setFocusTraversable(true);
         drawingArea.getChildren().add(canvasPane);
         drawingArea.addCoordinateText();
         drawingArea.addEventListeners(canvasPane);
         tab.setContent(drawingArea);
+        canvasPane.requestFocus();
     }
 
     public void setTabbedPane(final TabPane drawingTabbedPane) {
