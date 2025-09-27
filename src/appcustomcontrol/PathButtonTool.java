@@ -92,7 +92,7 @@ public class PathButtonTool extends DrawableButtonTool {
     }
 
     @Override
-    public <T extends InputEvent> Map<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
+    public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T event){
         TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
         renderTree.put(PRIMARY, new LinkedHashMap<>());
         renderTree.put(SECONDARY, new LinkedHashMap<>());

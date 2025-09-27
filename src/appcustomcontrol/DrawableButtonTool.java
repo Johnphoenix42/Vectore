@@ -1,22 +1,27 @@
 package appcustomcontrol;
 
+import appcomponent.DrawPane;
 import appcomponent.SubToolsPanel;
 import apputil.AppLogger;
 import apputil.GlobalDrawPaneConfig;
 import com.sun.istack.internal.NotNull;
 import javafx.collections.ObservableList;
+import javafx.event.EventType;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
+import javafx.scene.input.InputEvent;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Shape;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -68,6 +73,52 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
     public abstract OptionButtonsBuilder getOptions();
 
     public abstract void setCurrentToolbarOptions(DrawableButtonTool tool);
+
+
+    public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> draw(EventType<T> eventType, T ev) {
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
+        if (eventType == KeyEvent.KEY_PRESSED) {
+            if(((KeyEvent)ev).isControlDown()) {
+                DrawPane drawingPane = ((DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent());
+                if (drawingPane != null) {
+                    //drawingPane.getActiveGridCoordinates().get("x").stream().reduce((e, f) -> e - f);
+                    for (double x : drawingPane.getActiveGridCoordinates().getOrDefault("x", new ArrayList<>())) {
+                        if (drawingPane.getXCanvasPos() < x - 3 && drawingPane.getXCanvasPos() > x + 3) continue;
+                        Line vLine = new Line(x, 0, x, 400);
+                        vLine.setStroke(Color.GRAY);
+                        vLine = (Line) nodeTree.get(SECONDARY).putIfAbsent("v_guide_line", vLine);
+                        renderTree.get(SECONDARY).put("v_guide_line", vLine);
+                    }
+                    for (double y : drawingPane.getActiveGridCoordinates().getOrDefault("y", new ArrayList<>())) {
+                        if (drawingPane.getYCanvasPos() < y - 3 && drawingPane.getYCanvasPos() > y + 3) continue;
+                        Line hLine = new Line(0, y, 400, y);
+                        hLine.setStroke(Color.GRAY);
+                        hLine = (Line) nodeTree.get(SECONDARY).putIfAbsent("h_guide_line", hLine);
+                        renderTree.get(SECONDARY).put("h_guide_line", hLine);
+                    }
+                }
+            }
+        }
+        return renderTree;
+    }
+
+    public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T ev) {
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
+
+        if (eventType == KeyEvent.KEY_RELEASED) {
+            if (!((KeyEvent)ev).isControlDown()) {
+                Line vLine = (Line) nodeTree.get(SECONDARY).get("v_guide_line");
+                if (vLine != null) renderTree.get(SECONDARY).put("v_guide_line", vLine);
+                Line hLine = (Line) nodeTree.get(SECONDARY).get("h_guide_line");
+                if (hLine != null) renderTree.get(SECONDARY).put("h_guide_line", hLine);
+            }
+        }
+        return renderTree;
+    }
 
     public static class OptionButtonsBuilder{
         public static final String GLOBAL_NODE_OPTIONS = "static";

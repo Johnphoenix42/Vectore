@@ -5,6 +5,7 @@ import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.TextAlignment;
 
 import java.io.Serializable;
 
@@ -16,6 +17,7 @@ public class Text extends ShapeModel implements Serializable {
     private String fontName;
     private String fontFamily;
     private String style;
+    private TextAlignment alignment;
     private double fontSize;
 
     public Text(Node text) {
@@ -28,6 +30,9 @@ public class Text extends ShapeModel implements Serializable {
         setFontFamily(font.getFamily());
         setStyle(font.getStyle());
         setFontSize(font.getSize());
+        setLabelString(textShape.getText());
+        setAlignment(textShape.getTextAlignment());
+        System.out.println(style);
     }
 
     public Text(double x, double y){
@@ -38,7 +43,11 @@ public class Text extends ShapeModel implements Serializable {
     @Override
     public Shape createShape() {
         javafx.scene.text.Text text = new javafx.scene.text.Text(getX(), getY(), getLabelString());
-        text.setFont(Font.font(fontFamily, fontSize));
+        text.setTextAlignment(alignment);
+        boolean isItalic = style.matches("Italic");
+        boolean isBold = style.matches("Bold");
+        text.setFont(Font.font(fontFamily, isBold ? FontWeight.BOLD : FontWeight.NORMAL,
+                isItalic ? FontPosture.ITALIC : FontPosture.REGULAR, fontSize));
         return text;
     }
 
@@ -81,5 +90,9 @@ public class Text extends ShapeModel implements Serializable {
 
     public void setFontSize(double fontSize) {
         this.fontSize = fontSize;
+    }
+
+    public void setAlignment(TextAlignment alignment) {
+        this.alignment = alignment;
     }
 }
