@@ -3,6 +3,7 @@ package appcomponent;
 import appcustomcontrol.DrawableButtonTool;
 import apputil.GlobalDrawPaneConfig;
 import apputil.NewProjectModelConsumer;
+import apputil.Tree;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -32,10 +33,11 @@ import java.util.logging.Logger;
 
 public class AppMenuBar extends MenuBar {
 
-    private final Map<String, LinkedHashMap<String, MenuItem[]>> menuTreeMap = new LinkedHashMap<>();
+    private final LinkedHashMap<String, LinkedHashMap<String, MenuItem[]>> menuTreeMap = new LinkedHashMap<>();
     private final GlobalDrawPaneConfig globalConfig;
     private NewProjectModelConsumer consumer;
     private TabPane drawingTabbedPane;
+    private final ArrayList<MenuItem> menuArrayList = new ArrayList<>();
 
     public AppMenuBar(GlobalDrawPaneConfig config){
         super();
@@ -83,6 +85,15 @@ public class AppMenuBar extends MenuBar {
                 menu.getItems().add(menuItem);
             }
             getMenus().add(menu);
+        }
+    }
+
+    @SafeVarargs
+    private final void addMenuTree(Tree<MenuItem>... menuTree) {
+        for (Tree<MenuItem> menuItemTree : menuTree) {
+            MenuItem menuItem = menuItemTree.getRoot().getElement();
+            menuTreeMap.put(menuItem.getText().toLowerCase(), menuItem);
+            getMenus().add((Menu) menuItem);
         }
     }
 
@@ -302,6 +313,8 @@ public class AppMenuBar extends MenuBar {
             //dialog.show();
         });
     }
+
+
 
     public void setDrawingTabbedPane(TabPane drawingTabbedPane) {
         this.drawingTabbedPane = drawingTabbedPane;
