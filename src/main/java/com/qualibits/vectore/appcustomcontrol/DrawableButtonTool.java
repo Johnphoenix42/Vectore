@@ -1,0 +1,279 @@
+package com.qualibits.vectore.appcustomcontrol;
+
+import com.qualibits.vectore.appcomponent.DrawPane;
+import com.qualibits.vectore.appcomponent.SubToolsPanel;
+import com.qualibits.vectore.apputil.AppLogger;
+import com.qualibits.vectore.apputil.GlobalDrawPaneConfig;
+//import com.sun.istack.internal.NotNull;
+import javafx.collections.ObservableList;
+import javafx.event.EventType;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
+import javafx.scene.input.InputEvent;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.*;
+import javafx.scene.paint.*;
+import javafx.scene.shape.Line;
+import javafx.scene.shape.Shape;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public abstract class DrawableButtonTool extends ToolbarButton implements DrawTriggerable, OptionToolbarSettable{
+
+    public static final String SECONDARY = "secondary";
+    public static final String PRIMARY = "primary";
+
+    // PathButtonTool's own very nodeTree. It's "primary" childNode contains every path main.java.com.qualibits.vectore.appcomponent.DrawPane still has, i.e. not deleted.
+    TreeMap<String, LinkedHashMap<String, Node>> nodeTree = new TreeMap<>();
+    protected OptionButtonsBuilder optionButtonsBuilder;
+
+    public DrawableButtonTool(String label, GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
+        super(label, config, toolOptionsPanel);
+        optionButtonsBuilder = new OptionButtonsBuilder(config);
+        setPersistentlySelectable(true);
+        Color hoverColor = Color.BLUE;
+        Color defaultColor = Color.color(0.2, 0.2, 0.2);
+        DropShadow shadow = new DropShadow(5, defaultColor);
+        setEffect(shadow);
+        setOnMouseEntered(event -> shadow.setColor(hoverColor));
+        setOnMouseExited(event -> shadow.setColor(defaultColor));
+    }
+
+    public void setAsCurrentlySelectedTool(){
+        if(!isPersistentlySelectable()) return;
+        config.setCurrentTool(this);
+        AppLogger.log(getClass(), 31, "Current tool is " + config.getCurrentTool());
+        setBackground(new Background((new BackgroundFill(Color.grayRgb(50),
+                new CornerRadii(5), new Insets(5)))));
+        setTextFill(Color.WHITE);
+        //((SVGPath) getGraphic()).setFill(Color.WHITE);
+    }
+
+    @Override
+    public boolean isPersistentlySelectable(){
+        return true;
+    }
+
+    @Override
+    public void addClickListener(DrawableButtonTool prevSelectedButton) {
+        setAsCurrentlySelectedTool();
+        setCurrentToolbarOptions(this);
+    }
+
+    public abstract OptionButtonsBuilder getOptions();
+
+    public abstract void setCurrentToolbarOptions(DrawableButtonTool tool);
+
+
+    public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> draw(EventType<T> eventType, T ev) {
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
+        if (eventType == KeyEvent.KEY_PRESSED) {
+            if(((KeyEvent)ev).isControlDown()) {
+                DrawPane drawingPane = ((DrawPane) toolOptionsPanel.getDrawingTabbedPane().getSelectionModel().getSelectedItem().getContent());
+                if (drawingPane != null) {
+                    //drawingPane.getActiveGridCoordinates().get("x").stream().reduce((e, f) -> e - f);
+                    for (double x : drawingPane.getActiveGridCoordinates().getOrDefault("x", new ArrayList<>())) {
+                        if (drawingPane.getXCanvasPos() < x - 3 && drawingPane.getXCanvasPos() > x + 3) continue;
+                        Line vLine = new Line(x, 0, x, 400);
+                        vLine.setStroke(Color.GRAY);
+                        vLine = (Line) nodeTree.get(SECONDARY).putIfAbsent("v_guide_line", vLine);
+                        renderTree.get(SECONDARY).put("v_guide_line", vLine);
+                    }
+                    for (double y : drawingPane.getActiveGridCoordinates().getOrDefault("y", new ArrayList<>())) {
+                        if (drawingPane.getYCanvasPos() < y - 3 && drawingPane.getYCanvasPos() > y + 3) continue;
+                        Line hLine = new Line(0, y, 400, y);
+                        hLine.setStroke(Color.GRAY);
+                        hLine = (Line) nodeTree.get(SECONDARY).putIfAbsent("h_guide_line", hLine);
+                        renderTree.get(SECONDARY).put("h_guide_line", hLine);
+                    }
+                }
+            }
+        }
+        return renderTree;
+    }
+
+    public <T extends InputEvent> TreeMap<String, LinkedHashMap<String, Node>> unDraw(EventType<T> eventType, T ev) {
+        TreeMap<String, LinkedHashMap<String, Node>> renderTree = new TreeMap<>();
+        renderTree.put(PRIMARY, new LinkedHashMap<>());
+        renderTree.put(SECONDARY, new LinkedHashMap<>());
+
+        if (eventType == KeyEvent.KEY_RELEASED) {
+            if (!((KeyEvent)ev).isControlDown()) {
+                Line vLine = (Line) nodeTree.get(SECONDARY).get("v_guide_line");
+                if (vLine != null) renderTree.get(SECONDARY).put("v_guide_line", vLine);
+                Line hLine = (Line) nodeTree.get(SECONDARY).get("h_guide_line");
+                if (hLine != null) renderTree.get(SECONDARY).put("h_guide_line", hLine);
+            }
+        }
+        return renderTree;
+    }
+
+    public static class OptionButtonsBuilder{
+        public static final String GLOBAL_NODE_OPTIONS = "static";
+
+        protected LinkedHashMap<String, LinkedHashMap<String, Node>> nodeMap;
+        private final GlobalDrawPaneConfig config;
+
+        ColorPicker colorPicker;
+        ToggleButton fillColorToggleButton;
+        ToggleButton fillGradientToggleButton;
+        ToggleButton fillPatternToggleButton;
+        ToggleButton strokeColorToggleButton;
+        ToggleButton strokeGradientToggleButton;
+        ToggleButton strokePatternToggleButton;
+        Spinner<Double> strokeWidthSpinner;
+
+        OptionButtonsBuilder(GlobalDrawPaneConfig config){
+            this.config = config;
+            ToggleGroup fillToggleGroup = new ToggleGroup();
+            ToggleGroup strokeToggleGroup = new ToggleGroup();
+            createFillButtons(fillToggleGroup);
+            createStrokeButtons(strokeToggleGroup);
+            Separator separator = new Separator(Orientation.VERTICAL);
+
+            nodeMap = new LinkedHashMap<>();
+            LinkedHashMap<String, Node> toolsMap = new LinkedHashMap<>();
+
+            toolsMap.put("fill_stroke_grid", createGridAndFill());
+            toolsMap.put("separator", separator);
+            nodeMap.put(GLOBAL_NODE_OPTIONS, toolsMap);
+        }
+
+        private void createFillButtons (ToggleGroup toggleGroup) {
+            colorPicker = new ColorPicker(Color.BLACK);
+            colorPicker.setPrefSize(BUTTON_WIDTH, 30);
+            fillColorToggleButton = new ToggleButton("fill");
+            fillGradientToggleButton = new ToggleButton("Gr");
+            fillPatternToggleButton = new ToggleButton("Pa");
+
+            fillColorToggleButton.setToggleGroup(toggleGroup);
+            fillColorToggleButton.setUserData(colorPicker);
+            fillColorToggleButton.setOnAction(event -> {
+                Shape canvasActiveNode = (Shape) config.getSelectedNode();
+                if (canvasActiveNode == null) return;
+                config.setForegroundColor(colorPicker.getValue());
+                canvasActiveNode.setFill(colorPicker.getValue());
+            });
+            fillGradientToggleButton.setToggleGroup(toggleGroup);
+            fillPatternToggleButton.setToggleGroup(toggleGroup);
+            fillPatternToggleButton.setOnAction(event -> {
+                Shape canvasActiveNode = (Shape) config.getSelectedNode();
+                if (canvasActiveNode == null) return;
+                ImagePattern imagePattern = new ImagePattern(new Image(getClass().getResourceAsStream("/com/qualibits/vectore/images/Ui eg.png")));
+                config.setForegroundColor(imagePattern);
+                canvasActiveNode.setFill(imagePattern);
+            });
+        }
+
+        private void createStrokeButtons (ToggleGroup toggleGroup) {
+            strokeColorToggleButton = new ToggleButton("Stroke");
+            strokeColorToggleButton.setSelected(true);
+            strokeGradientToggleButton = new ToggleButton("Gr");
+            strokePatternToggleButton = new ToggleButton("Pa");
+
+            strokeColorToggleButton.setToggleGroup(toggleGroup);
+            strokeColorToggleButton.setOnAction(event -> {
+                Shape canvasActiveNode = (Shape) config.getSelectedNode();
+                if (canvasActiveNode == null) return;
+                config.setStrokeColor(colorPicker.getValue());
+                canvasActiveNode.setStroke(colorPicker.getValue());
+            });
+            strokeGradientToggleButton.setToggleGroup(toggleGroup);
+            strokeGradientToggleButton.setOnAction(event -> {
+                Shape canvasActiveNode = (Shape) config.getSelectedNode();
+                if (canvasActiveNode == null) return;
+                Stop[] stops = {new Stop(0, Color.BLACK), new Stop(1, Color.RED)};
+                LinearGradient lg = new LinearGradient(0, 0, 0, 1, true, CycleMethod.REFLECT, stops);
+                config.setStrokeColor(lg);
+                canvasActiveNode.setStroke(lg);
+            });
+            strokePatternToggleButton.setToggleGroup(toggleGroup);
+        }
+
+        private GridPane createGridAndFill () {
+            GridPane fillStrokeGrid = new GridPane();
+            fillStrokeGrid.add(colorPicker, 0, 0);
+            Label fillLabel = new Label("Fill");
+            fillStrokeGrid.add(fillLabel, 1, 0);
+            fillStrokeGrid.add(fillColorToggleButton, 2, 0);
+            fillStrokeGrid.add(fillGradientToggleButton, 3, 0);
+            fillStrokeGrid.add(fillPatternToggleButton, 4, 0);
+
+            fillStrokeGrid.add(new Label("Stroke"), 0, 1);
+            fillStrokeGrid.add(strokeColorToggleButton, 1, 1);
+            fillStrokeGrid.add(strokeGradientToggleButton, 2, 1);
+            fillStrokeGrid.add(strokePatternToggleButton, 3, 1);
+
+            strokeWidthSpinner = new Spinner<>(0, 10, 1.0, 1);
+            strokeWidthSpinner.setEditable(true);
+            strokeWidthSpinner.setPrefWidth(60);
+            strokeWidthSpinner.setValueFactory(new DoubleSpinnerValueFactory(strokeWidthSpinner, valueFactory -> {
+                config.setStrokeWidth(valueFactory.getValue());
+                if (config.getSelectedNode() == null) return;
+                ((Shape) config.getSelectedNode()).setStrokeWidth(valueFactory.getValue());
+            }));
+            strokeWidthSpinner.getValueFactory().setValue(1.0);
+
+            fillStrokeGrid.add(strokeWidthSpinner, 4, 1, 2, 1);
+            GridPane.setHalignment(fillLabel, HPos.CENTER);
+            return fillStrokeGrid;
+        }
+
+        /**
+         * Applies selected color from a ColorPicker to a shape, using ToggleButton as a switch.
+         * If no canvas shape is selected, nothing happens.
+         * @param toggleButton control that will be used as the switch. When the toggle button is on, color is
+         *                     added. When off, color is removed, i.e. shape is hollow, not filled with TRANSPARENT
+         */
+        protected void setColorPickerOnAction(ToggleButton toggleButton){
+            Shape canvasActiveNode = (Shape) config.getSelectedNode();
+            if (canvasActiveNode == null) return;
+            ColorPicker picker = (ColorPicker) toggleButton.getUserData();
+            if (picker == this.colorPicker) {
+                canvasActiveNode.setFill(toggleButton.isSelected() ? picker.getValue() : null);
+                Logger.getLogger(getClass().getName()).log(Level.INFO, "activeNode = " + canvasActiveNode);
+            }
+            else canvasActiveNode.setStroke(toggleButton.isSelected() ? picker.getValue() : null);
+        }
+
+        public LinkedHashMap<String, Node> getNodes(String key) {
+            nodeMap.computeIfAbsent(key, k -> new LinkedHashMap<>(0));
+            return nodeMap.get(key);
+        }
+
+        /**
+         * Switching from one button to another involves clearing the currently shown controls
+         * of the options toolbar and filling it up with the controls specific to a newly selected
+         * tool.
+         *
+         * @param items lists the options controls that are specific to the newly selected toolbar button.
+         * @param newID id of the new button or tool selected.
+         */
+        public void switchToolOptions(ObservableList<Node> items, String newID){
+            DrawableButtonTool prevTool = config.getPrevSelectedTool();
+            if (prevTool != null) {
+                LinkedHashMap<String, Node> prevToolOptions = prevTool.getOptions().getNodes(prevTool.getId());
+                for (Map.Entry<String, Node> prevToolOptionSet : prevToolOptions.entrySet()) {
+                    items.remove(prevToolOptions.get(prevToolOptionSet.getKey()));
+                }
+            }
+            LinkedHashMap<String, Node> newToolOptions = getNodes(newID);
+            for (Map.Entry<String, Node> newToolOptionSet : newToolOptions.entrySet()) {
+                items.add(newToolOptions.get(newToolOptionSet.getKey()));
+            }
+//            config.setSelectedNode(null);
+        }
+    }
+}

@@ -1,0 +1,59 @@
+package com.qualibits.vectore.apputil;
+
+import com.qualibits.vectore.appcomponent.DrawPane;
+import com.qualibits.vectore.appcomponent.VectoreProject;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.layout.Pane;
+import javafx.stage.Screen;
+
+import java.util.function.Consumer;
+
+public class NewProjectModelConsumer implements Consumer<VectoreProject> {
+
+    private static final Double WIDTH;
+    private static final Double HEIGHT;
+    static {
+        Rectangle2D screenRect = Screen.getPrimary().getVisualBounds();
+        WIDTH = screenRect.getWidth();
+        HEIGHT = screenRect.getHeight();
+    }
+
+    private TabPane drawingTabbedPane;
+    private final GlobalDrawPaneConfig config;
+    private VectoreProject vectoreProject;
+
+    public NewProjectModelConsumer(GlobalDrawPaneConfig config){
+        super();
+        this.config = config;
+    }
+
+    @Override
+    public void accept(VectoreProject vectoreProject) {
+        this.vectoreProject = vectoreProject;
+        Tab tab = new Tab(vectoreProject.getProjectName());
+        drawingTabbedPane.getTabs().add(tab);
+        final DrawPane drawingArea = new DrawPane(this.config, 500, 200);
+        drawingArea.setFocusTraversable(true);
+        Pane canvasPane = drawingArea.createCanvas(vectoreProject.getWidth(), vectoreProject.getHeight());
+        canvasPane.setFocusTraversable(true);
+        drawingArea.getChildren().add(canvasPane);
+        drawingArea.addCoordinateText();
+        drawingArea.addEventListeners(canvasPane);
+        tab.setContent(drawingArea);
+        canvasPane.requestFocus();
+    }
+
+    public void setTabbedPane(final TabPane drawingTabbedPane) {
+        this.drawingTabbedPane = drawingTabbedPane;
+    }
+
+    public TabPane getDrawingTabbedPane() {
+        return drawingTabbedPane;
+    }
+
+    public VectoreProject getVectoreProject() {
+        return vectoreProject;
+    }
+}
