@@ -24,7 +24,6 @@ import org.joml.Vector3f;
  *      also should not be using Combo box, <code>Spinner<String></code> is better.
  * Todo: focus on TextButtonTool and CircleButtonTool and after that, add a Select button.
  * Todo: Show color palette so users can switch between different color options they've chosen for their project (maybe with shortcuts too).
- * Todo: An export and import (svg) menu button.
  */
 public class VectoreMain extends Application {
 
