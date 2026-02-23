@@ -4,11 +4,13 @@ import javafx.scene.Node;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Shape;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Optional;
 
 public class Rectangle extends ShapeModel implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private double width, height;

@@ -5,6 +5,7 @@ import javafx.scene.Node;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.*;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -15,6 +16,7 @@ import java.util.stream.Stream;
 
 public class Path extends ShapeModel implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private String pathData;

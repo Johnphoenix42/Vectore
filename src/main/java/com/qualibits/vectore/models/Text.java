@@ -7,10 +7,12 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 public class Text extends ShapeModel implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private String labelString;

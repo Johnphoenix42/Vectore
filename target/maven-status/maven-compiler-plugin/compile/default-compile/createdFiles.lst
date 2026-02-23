@@ -17,7 +17,6 @@ com\qualibits\vectore\apputil\Icon.class
 com\qualibits\vectore\appcustomcontrol\CircleButtonTool.class
 com\qualibits\vectore\appcomponent\ToolsPanel$ButtonTool.class
 com\qualibits\vectore\appcustomcontrol\CircleButtonTool$DoubleSpinnerValueFactory.class
-com\qualibits\vectore\apputil\AppLogger.class
 com\qualibits\vectore\apputil\DoublyLinkedList$Node.class
 com\qualibits\vectore\appcomponent\Grids.class
 com\qualibits\vectore\models\ShapeModel.class
@@ -32,15 +31,18 @@ com\qualibits\vectore\appcustomcontrol\ToolbarButton.class
 com\qualibits\vectore\appcomponent\AppMenuBar.class
 com\qualibits\vectore\appcustomcontrol\InDecrementListener.class
 com\qualibits\vectore\appcustomcontrol\RectangleButtonTool$RectangleOptions.class
+com\qualibits\vectore\apputil\Tree$Node.class
 com\qualibits\vectore\appcustomcontrol\PathButtonTool.class
 com\qualibits\vectore\apputil\SinglyLinkedList$Node.class
 com\qualibits\vectore\appcomponent\VectoreProject.class
 com\qualibits\vectore\appcustomcontrol\FontManager.class
 com\qualibits\vectore\appcomponent\SubToolsPanel.class
 com\qualibits\vectore\appcustomcontrol\DrawableButtonTool.class
+com\qualibits\vectore\apputil\NodePosition.class
 com\qualibits\vectore\appcustomcontrol\TextButtonTool$TextOptions.class
 com\qualibits\vectore\appcomponent\Canvas.class
 com\qualibits\vectore\appcomponent\DrawPane$CanvasActionMode.class
 com\qualibits\vectore\models\Circle.class
 com\qualibits\vectore\appcomponent\SVGTagMaker.class
+com\qualibits\vectore\apputil\Tree.class
 com\qualibits\vectore\apputil\SinglyLinkedList.class
