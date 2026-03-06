@@ -18,6 +18,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Shape;
+import javafx.stage.FileChooser;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -167,9 +168,29 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             fillPatternToggleButton.setOnAction(event -> {
                 Shape canvasActiveNode = (Shape) config.getSelectedNode();
                 if (canvasActiveNode == null) return;
-                ImagePattern imagePattern = new ImagePattern(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/qualibits/vectore/images/Ui eg.png"))));
-                config.setForegroundColor(imagePattern);
-                canvasActiveNode.setFill(imagePattern);
+
+                //PatternDialog patternDialog = AppDialog.get(new PatternDialogData("Pattern Chooser", ))
+                //static PatternDialog patternDialog = new PatternDialog();
+
+                ButtonType okButtonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+                Dialog<String> dialog = new Dialog<>();
+                dialog.setTitle("Pattern Chooser");
+                DialogPane dialogPane = new DialogPane();
+                GridPane patternGridPane = new GridPane();
+                patternGridPane.add(new Label("Wood"), 0, 0);
+                patternGridPane.add(new Label("Stone"), 1, 0);
+                dialogPane.setContent(patternGridPane);
+                dialog.setDialogPane(new DialogPane());
+                dialog.getDialogPane().getButtonTypes().add(okButtonType);
+                //boolean disabled = true;
+                //dialog.getDialogPane().lookupButton(okButtonType).setDisable(disabled);
+                dialog. showAndWait()
+                        .filter(response -> response.equals("Wood"))
+                        .ifPresent(response -> {
+                            ImagePattern imagePattern = new ImagePattern(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/qualibits/vectore/images/Finishes.Flooring.Bamboo.jpg"))));
+                            config.setForegroundColor(imagePattern);
+                            canvasActiveNode.setFill(imagePattern);
+                        });
             });
         }
 
