@@ -3,11 +3,13 @@ package com.qualibits.vectore.models;
 import javafx.scene.Node;
 import javafx.scene.shape.Shape;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Optional;
 
 public abstract class ShapeModel implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private double x, y;

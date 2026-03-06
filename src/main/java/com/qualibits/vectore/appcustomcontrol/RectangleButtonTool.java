@@ -2,7 +2,6 @@ package com.qualibits.vectore.appcustomcontrol;
 
 import com.qualibits.vectore.appcomponent.DrawPane;
 import com.qualibits.vectore.appcomponent.SubToolsPanel;
-import com.qualibits.vectore.apputil.AppLogger;
 import com.qualibits.vectore.apputil.GlobalDrawPaneConfig;
 import com.qualibits.vectore.apputil.Icon;
 import javafx.collections.ObservableList;
@@ -25,6 +24,8 @@ import javafx.scene.shape.*;
 import javafx.scene.text.Text;
 
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class RectangleButtonTool extends DrawableButtonTool {
 
@@ -33,6 +34,7 @@ public class RectangleButtonTool extends DrawableButtonTool {
     private DrawPane currentDrawingArea;
     private Rectangle activeRectangle = null;
     private final Circle[] anchors = new Circle[2];
+    private final Logger rectangleButtonLogger = Logger.getLogger(getClass().getName());
     private boolean isDrawing = false;
     private double mouseStartPointX = 0, mouseStartPointY = 0;
     private double rectBottomPointX = 0, rectBottomPointY = 0;
@@ -146,7 +148,7 @@ public class RectangleButtonTool extends DrawableButtonTool {
         anchor.setOnMouseDragged(event -> {
             if(isDrawing){
                 //if the rectangle is in drawing mode, you cannot drag its anchors.
-                AppLogger.log(getClass(), 282, "drag not executing");
+                rectangleButtonLogger.log(Level.SEVERE, "drag not executing");
                 return;
             }
             double eventX = event.getX();

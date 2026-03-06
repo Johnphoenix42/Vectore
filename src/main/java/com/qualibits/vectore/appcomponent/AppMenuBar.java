@@ -47,7 +47,7 @@ public class AppMenuBar extends MenuBar {
         menuTreeMap.put("View", new LinkedHashMap<>());
         menuTreeMap.put("Help", new LinkedHashMap<>());
         populateFileMap();
-        menuTreeMap.get("View").put("Grid", new MenuItem[]{new MenuItem("None"), new MenuItem("2x2")});
+        populateViewMap();
 
         HashMap<String, Consumer<MenuItem>> methRef = new HashMap<>();
         methRef.put("New", this::createNewProject);
@@ -57,6 +57,8 @@ public class AppMenuBar extends MenuBar {
             activeGrid.computeCoordinates(consumer.getVectoreProject().getWidth(), getConsumer().getVectoreProject().getHeight());
         }));
         methRef.put("Save", this::saveProject);
+        methRef.put("Import", this::importSvg);
+        methRef.put("Export", this::exportSvg);
         methRef.put("Exit", menuItem -> menuItem.setOnAction(e -> System.exit(0)));
         methRef.put("Grid", menuItem -> menuItem.setOnAction(e -> {
             Grids activeGrid = Grids.GRID_2x2;
@@ -102,8 +104,17 @@ public class AppMenuBar extends MenuBar {
         fileSubMap.put("New", null);
         fileSubMap.put("Open", null);
         fileSubMap.put("Recent", new MenuItem[]{new MenuItem("This"), new MenuItem("That"), new MenuItem("These"), new MenuItem("Those")});
+        fileSubMap.put("Import", null);
+        fileSubMap.put("Export", null);
         fileSubMap.put("Save", null);
         fileSubMap.put("Exit", null);
+    }
+
+    private void populateViewMap() {
+        menuTreeMap.get("View").put("Grid", new MenuItem[]{
+                new MenuItem("None"),
+                new MenuItem("2x2")
+        });
     }
 
     private void openFileChooser(MenuItem menuItem) {
@@ -312,6 +323,14 @@ public class AppMenuBar extends MenuBar {
 
             //dialog.show();
         });
+    }
+
+    public void importSvg(MenuItem menuItem) {
+
+    }
+
+    public void exportSvg(MenuItem menuItem) {
+
     }
 
 

@@ -2,7 +2,6 @@ package com.qualibits.vectore.appcustomcontrol;
 
 import com.qualibits.vectore.appcomponent.DrawPane;
 import com.qualibits.vectore.appcomponent.SubToolsPanel;
-import com.qualibits.vectore.apputil.AppLogger;
 import com.qualibits.vectore.apputil.GlobalDrawPaneConfig;
 import com.qualibits.vectore.apputil.Icon;
 import javafx.collections.ObservableList;
@@ -23,6 +22,8 @@ import javafx.scene.shape.*;
 
 import org.joml.Vector2d;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PathButtonTool extends DrawableButtonTool {
 
@@ -35,6 +36,7 @@ public class PathButtonTool extends DrawableButtonTool {
     private final PathOptions optionButtonsBuilder;
     private DrawPane currentDrawingArea;
     private Path activePath = null;
+    private final Logger pathButtonLogger = Logger.getLogger(getClass().getName());
     private int shapeCounter = 0;
     private int breakPointCounter = 0;
 
@@ -308,7 +310,8 @@ public class PathButtonTool extends DrawableButtonTool {
                         secondaryMainTree.replace("control_0", controlPoint);
                     }
                 }catch (IndexOutOfBoundsException e) {
-                    AppLogger.log(getClass(), 221, "index = " + 4 + " is >= " + pathElements.size());
+
+                    pathButtonLogger.log(Level.WARNING, "index = " + 4 + " is >= " + pathElements.size());
                 }
                 //event.consume();
             }
@@ -316,7 +319,7 @@ public class PathButtonTool extends DrawableButtonTool {
         });
         breakPoint.setOnMouseDragged(event -> {
             if(isPathDrawing && !isPathOpenReady){
-                AppLogger.log(getClass(), 282, "drag not executing");
+                pathButtonLogger.log(Level.SEVERE, "drag not executing");
                 return;
             }
             double eventX = event.getX();

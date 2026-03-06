@@ -5,7 +5,6 @@ import com.qualibits.vectore.apputil.GlobalDrawPaneConfig;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
-import javafx.scene.control.TabPane;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -19,7 +18,6 @@ public class ToolsPanel extends ToolBar {
     private final GlobalDrawPaneConfig config;
     protected final SubToolsPanel toolOptionsPanel;
     DrawableButtonTool.OptionButtonsBuilder optionButtonsBuilder;
-    private TabPane drawingTabbedPane;
 
     public ToolsPanel(GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel){
         super();
@@ -34,8 +32,8 @@ public class ToolsPanel extends ToolBar {
     private void addButtons(SubToolsPanel toolOptionsPanel){
         ObservableList<Node> items = toolOptionsPanel.getItems();
         RectangleButtonTool rectangleButton = new RectangleButtonTool(config, toolOptionsPanel);
-        //rectangleButton.setShape(new Polygon(5, 8, 12, 20, 13, 6));
-        //rectangleButton.setStyle("-fx-");
+        /* rectangleButton.setShape(new Polygon(5, 8, 12, 20, 13, 6));
+        /rectangleButton.setStyle("-fx-");*/
 
         CircleButtonTool circleButton = new CircleButtonTool(config, toolOptionsPanel);
 
@@ -62,18 +60,6 @@ public class ToolsPanel extends ToolBar {
         }
         button.setAsCurrentlySelectedTool();
         optionButtonsBuilder.switchToolOptions(items, button.getId());
-    }
-
-    public void setTabbedPane(TabPane drawingTabbedPane) {
-        this.drawingTabbedPane = drawingTabbedPane;
-    }
-
-    class ButtonTool<T extends DrawableButtonTool> {
-
-        ButtonTool(T t){
-            //t.setCurrentToolbarOptions(DrawableButtonTool);
-        }
-
     }
 
 }

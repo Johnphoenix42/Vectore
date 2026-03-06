@@ -2,9 +2,7 @@ package com.qualibits.vectore.appcustomcontrol;
 
 import com.qualibits.vectore.appcomponent.DrawPane;
 import com.qualibits.vectore.appcomponent.SubToolsPanel;
-import com.qualibits.vectore.apputil.AppLogger;
 import com.qualibits.vectore.apputil.GlobalDrawPaneConfig;
-//import com.sun.istack.internal.NotNull;
 import javafx.collections.ObservableList;
 import javafx.event.EventType;
 import javafx.geometry.HPos;
@@ -20,11 +18,9 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Shape;
+import javafx.stage.FileChooser;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,6 +32,7 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
     // PathButtonTool's own very nodeTree. It's "primary" childNode contains every path main.java.com.qualibits.vectore.appcomponent.DrawPane still has, i.e. not deleted.
     TreeMap<String, LinkedHashMap<String, Node>> nodeTree = new TreeMap<>();
     protected OptionButtonsBuilder optionButtonsBuilder;
+    private final Logger drawableButtonLogger = Logger.getLogger(getClass().getName());
 
     public DrawableButtonTool(String label, GlobalDrawPaneConfig config, SubToolsPanel toolOptionsPanel) {
         super(label, config, toolOptionsPanel);
@@ -52,7 +49,7 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
     public void setAsCurrentlySelectedTool(){
         if(!isPersistentlySelectable()) return;
         config.setCurrentTool(this);
-        AppLogger.log(getClass(), 31, "Current tool is " + config.getCurrentTool());
+        drawableButtonLogger.log(Level.INFO, "Current tool is " + config.getCurrentTool());
         setBackground(new Background((new BackgroundFill(Color.grayRgb(50),
                 new CornerRadii(5), new Insets(5)))));
         setTextFill(Color.WHITE);
@@ -171,9 +168,29 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             fillPatternToggleButton.setOnAction(event -> {
                 Shape canvasActiveNode = (Shape) config.getSelectedNode();
                 if (canvasActiveNode == null) return;
-                ImagePattern imagePattern = new ImagePattern(new Image(getClass().getResourceAsStream("/com/qualibits/vectore/images/Ui eg.png")));
-                config.setForegroundColor(imagePattern);
-                canvasActiveNode.setFill(imagePattern);
+
+                //PatternDialog patternDialog = AppDialog.get(new PatternDialogData("Pattern Chooser", ))
+                //static PatternDialog patternDialog = new PatternDialog();
+
+                ButtonType okButtonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+                Dialog<String> dialog = new Dialog<>();
+                dialog.setTitle("Pattern Chooser");
+                DialogPane dialogPane = new DialogPane();
+                GridPane patternGridPane = new GridPane();
+                patternGridPane.add(new Label("Wood"), 0, 0);
+                patternGridPane.add(new Label("Stone"), 1, 0);
+                dialogPane.setContent(patternGridPane);
+                dialog.setDialogPane(new DialogPane());
+                dialog.getDialogPane().getButtonTypes().add(okButtonType);
+                //boolean disabled = true;
+                //dialog.getDialogPane().lookupButton(okButtonType).setDisable(disabled);
+                dialog. showAndWait()
+                        .filter(response -> response.equals("Wood"))
+                        .ifPresent(response -> {
+                            ImagePattern imagePattern = new ImagePattern(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/qualibits/vectore/images/Finishes.Flooring.Bamboo.jpg"))));
+                            config.setForegroundColor(imagePattern);
+                            canvasActiveNode.setFill(imagePattern);
+                        });
             });
         }
 

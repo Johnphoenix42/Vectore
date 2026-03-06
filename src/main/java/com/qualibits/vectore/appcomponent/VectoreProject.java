@@ -2,10 +2,12 @@ package com.qualibits.vectore.appcomponent;
 
 import com.qualibits.vectore.models.ShapeModel;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 
 public class VectoreProject implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final LinkedHashMap<String, ShapeModel> canvasElementsList = new LinkedHashMap<>();
