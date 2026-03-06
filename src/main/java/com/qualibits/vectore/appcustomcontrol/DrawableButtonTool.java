@@ -3,7 +3,6 @@ package com.qualibits.vectore.appcustomcontrol;
 import com.qualibits.vectore.appcomponent.DrawPane;
 import com.qualibits.vectore.appcomponent.SubToolsPanel;
 import com.qualibits.vectore.apputil.GlobalDrawPaneConfig;
-//import com.sun.istack.internal.NotNull;
 import javafx.collections.ObservableList;
 import javafx.event.EventType;
 import javafx.geometry.HPos;
@@ -20,10 +19,7 @@ import javafx.scene.paint.*;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Shape;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -171,7 +167,7 @@ public abstract class DrawableButtonTool extends ToolbarButton implements DrawTr
             fillPatternToggleButton.setOnAction(event -> {
                 Shape canvasActiveNode = (Shape) config.getSelectedNode();
                 if (canvasActiveNode == null) return;
-                ImagePattern imagePattern = new ImagePattern(new Image(getClass().getResourceAsStream("/com/qualibits/vectore/images/Ui eg.png")));
+                ImagePattern imagePattern = new ImagePattern(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/qualibits/vectore/images/Ui eg.png"))));
                 config.setForegroundColor(imagePattern);
                 canvasActiveNode.setFill(imagePattern);
             });
